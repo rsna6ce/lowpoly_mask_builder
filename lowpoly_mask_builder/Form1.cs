@@ -20,7 +20,7 @@ namespace lowpoly_mask_builder
         private const int WORLD_WIDTH = 200;
         private const int WORLD_HEIGHT = 300;
         private const int POINT_RADIUS = 4;
-        private const int EDGE_ACTIVE_DISTANCE = 4;
+        private const int EDGE_ACTIVE_DISTANCE = 8;
 
         public Form1()
         {
@@ -47,25 +47,77 @@ namespace lowpoly_mask_builder
 
         private void pictureBoxRight_Paint(object sender, PaintEventArgs e)
         {
-            Graphics g = e.Graphics;
-            g.Clear(Color.LightCyan);
+            Graphics gRight = e.Graphics;
+            gRight.Clear(Color.LightCyan);
 
-            DrawGrid(g);
+            DrawGrid(gRight);
 
             foreach (var triangle in triangles)
             {
-                DrawTriangle(g, triangle);
+                DrawTriangle(gRight, triangle);
             }
 
             if (activeEdge != null && isAddingTriangle)
             {
-                DrawTemporaryTriangle(g);
+                DrawTemporaryTriangle(gRight);
             }
 
             foreach (var vertex in vertices)
             {
-                DrawVertex(g, vertex, vertex == selectedVertex);
+                DrawVertex(gRight, vertex, vertex == selectedVertex);
             }
+            // pictureBoxLeftの描画は削除
+        }
+
+        private Point MirrorWorldToScreen(Vertex vertex)
+        {
+            // pictureBoxRightでの座標を計算
+            Point rightScreenPos = WorldToScreen(vertex);
+            // pictureBoxLeftで左右反転した座標を計算
+            int mirroredX = pictureBoxLeft.Width - rightScreenPos.X;
+            return new Point(mirroredX, rightScreenPos.Y);
+        }
+
+        private void DrawMirrorGrid(Graphics g)
+        {
+            Pen gridPen = new Pen(Color.FromArgb(200, 200, 200));
+
+            for (int x = 0; x <= WORLD_WIDTH; x += 2)
+            {
+                int screenX = (int)(x * (float)pictureBoxLeft.Width / WORLD_WIDTH);
+                g.DrawLine(gridPen, screenX, 0, screenX, pictureBoxLeft.Height);
+            }
+            for (int y = 0; y <= WORLD_HEIGHT; y += 2)
+            {
+                int screenY = (int)(y * (float)pictureBoxLeft.Height / WORLD_HEIGHT);
+                g.DrawLine(gridPen, 0, screenY, pictureBoxLeft.Width, screenY);
+            }
+        }
+
+        private void DrawMirrorTriangle(Graphics g, Triangle triangle)
+        {
+            Point p1 = MirrorWorldToScreen(vertices[triangle.V1]);
+            Point p2 = MirrorWorldToScreen(vertices[triangle.V2]);
+            Point p3 = MirrorWorldToScreen(vertices[triangle.V3]);
+
+            // 辺のみを描画
+            g.DrawLine(Pens.Black, p1, p2);
+            g.DrawLine(Pens.Black, p2, p3);
+            g.DrawLine(Pens.Black, p3, p1);
+        }
+
+        private void DrawMirrorVertex(Graphics g, Vertex vertex)
+        {
+            Point screenPos = MirrorWorldToScreen(vertex);
+            int radius = POINT_RADIUS;
+
+            // Z座標に応じたグレースケールの色を使用
+            int grayValue = (int)((float)vertex.Z / 100.0f * 255.0f);
+            grayValue = Math.Max(0, Math.Min(255, grayValue));
+            Brush brush = new SolidBrush(Color.FromArgb(grayValue, grayValue, grayValue));
+
+            g.FillEllipse(brush, screenPos.X - radius, screenPos.Y - radius, radius * 2, radius * 2);
+            g.DrawEllipse(Pens.Black, screenPos.X - radius, screenPos.Y - radius, radius * 2, radius * 2);
         }
 
         private void DrawGrid(Graphics g)
@@ -120,7 +172,21 @@ namespace lowpoly_mask_builder
         {
             Point screenPos = WorldToScreen(vertex);
             int radius = isSelected ? POINT_RADIUS + 2 : POINT_RADIUS;
-            Brush brush = isSelected ? Brushes.Red : Brushes.Blue;
+
+            Brush brush;
+            if (isSelected)
+            {
+                // 選択された頂点は赤のまま
+                brush = Brushes.Red;
+            }
+            else
+            {
+                // Z座標に応じてグレースケールで色を計算
+                int grayValue = (int)((float)vertex.Z / 100.0f * 255.0f);
+                grayValue = Math.Max(0, Math.Min(255, grayValue)); // 0～255の範囲に制限
+
+                brush = new SolidBrush(Color.FromArgb(grayValue, grayValue, grayValue));
+            }
 
             g.FillEllipse(brush, screenPos.X - radius, screenPos.Y - radius, radius * 2, radius * 2);
             g.DrawEllipse(Pens.Black, screenPos.X - radius, screenPos.Y - radius, radius * 2, radius * 2);
@@ -151,10 +217,21 @@ namespace lowpoly_mask_builder
                 Vertex nearestVertex = FindNearestVertex(e.Location, 10);
                 if (nearestVertex != null)
                 {
-                    selectedVertex = nearestVertex;
-                    isDragging = true;
+                    if (nearestVertex == selectedVertex)
+                    {
+                        // すでに選択されている頂点が再度クリックされた場合、選択を解除
+                        selectedVertex = null;
+                        isDragging = false;
+                        vScrollBarZ.Value = vScrollBarZ.Maximum; // スライダーを最上部に設定
+                    }
+                    else
+                    {
+                        // 異なる頂点が選択された場合、その頂点を新たに選択
+                        selectedVertex = nearestVertex;
+                        isDragging = true;
+                        vScrollBarZ.Value = vScrollBarZ.Maximum - selectedVertex.Z; // Z座標に対応した位置に設定
+                    }
                     isAddingTriangle = false;
-                    vScrollBarZ.Value = vScrollBarZ.Maximum - selectedVertex.Z;
                 }
                 else if (activeEdge != null)
                 {
@@ -197,16 +274,40 @@ namespace lowpoly_mask_builder
                 AddTriangleFromActiveEdge(e.Location);
             }
 
-            // ドラッグ終了時に頂点のマージ処理を行う
             if (isDragging && selectedVertex != null)
             {
                 MergeVerticesAtSamePosition(selectedVertex);
             }
 
+            // pictureBoxLeftを再描画
+            DrawMirrorImage();
+
             activeEdge = null;
             isAddingTriangle = false;
             isDragging = false;
             pictureBoxRight.Invalidate();
+        }
+
+        private void DrawMirrorImage()
+        {
+            if (pictureBoxLeft == null) return;
+
+            Graphics gLeft = pictureBoxLeft.CreateGraphics();
+            gLeft.Clear(Color.FromArgb(224, 224, 224));
+
+            // 鏡像の三角形（辺のみ）を描画
+            foreach (var triangle in triangles)
+            {
+                DrawMirrorTriangle(gLeft, triangle);
+            }
+
+            // 鏡像の頂点を描画
+            foreach (var vertex in vertices)
+            {
+                DrawMirrorVertex(gLeft, vertex);
+            }
+
+            gLeft.Dispose();
         }
 
         private void MergeVerticesAtSamePosition(Vertex primaryVertex)
@@ -257,43 +358,113 @@ namespace lowpoly_mask_builder
 
         private void AddTriangleFromActiveEdge(Point mouseLocation)
         {
-            // activeEdgeが所属している三角形をすべて取得
-            var trianglesContainingEdge = triangles.Where(t =>
-                ((t.V1 == activeEdge.VertexIndex1 && t.V2 == activeEdge.VertexIndex2) ||
-                 (t.V1 == activeEdge.VertexIndex2 && t.V2 == activeEdge.VertexIndex1) ||
-                 (t.V2 == activeEdge.VertexIndex1 && t.V3 == activeEdge.VertexIndex2) ||
-                 (t.V2 == activeEdge.VertexIndex2 && t.V3 == activeEdge.VertexIndex1) ||
-                 (t.V3 == activeEdge.VertexIndex1 && t.V1 == activeEdge.VertexIndex2) ||
-                 (t.V3 == activeEdge.VertexIndex2 && t.V1 == activeEdge.VertexIndex1))
-            ).ToList();
+            int v1 = activeEdge.VertexIndex1;
+            int v2 = activeEdge.VertexIndex2;
 
-            if (trianglesContainingEdge.Count > 1)
+            // ActiveEdgeの両端が鏡像境界（X=0）にあるかチェック
+            if (vertices[v1].X == 0 && vertices[v2].X == 0)
             {
-                // activeEdgeが複数の三角形に所属している場合、中点を追加して分割
-                SplitTrianglesByAddingMidpoint(trianglesContainingEdge);
+                // 鏡像境界上のエッジを中点で分割
+                SplitMirrorBoundaryEdge();
             }
             else
             {
-                // 通常の処理：新しい頂点を追加して三角形を作成
-                Vertex worldPos = ScreenToWorld(mouseLocation);
-                int newX = worldPos.X / GRID_SIZE * GRID_SIZE;
-                int newY = worldPos.Y / GRID_SIZE * GRID_SIZE;
+                // activeEdgeが所属している三角形をすべて取得
+                var trianglesContainingEdge = triangles.Where(t =>
+                    ((t.V1 == v1 && t.V2 == v2) || (t.V1 == v2 && t.V2 == v1) ||
+                     (t.V2 == v1 && t.V3 == v2) || (t.V2 == v2 && t.V3 == v1) ||
+                     (t.V3 == v1 && t.V1 == v2) || (t.V3 == v2 && t.V1 == v1))
+                ).ToList();
 
-                newX = Math.Max(0, Math.Min(WORLD_WIDTH, newX));
-                newY = Math.Max(0, Math.Min(WORLD_HEIGHT, newY));
-
-                Vertex existingVertex = vertices.FirstOrDefault(v => v.X == newX && v.Y == newY);
-
-                if (existingVertex != null)
+                if (trianglesContainingEdge.Count > 1)
                 {
-                    int existingVertexIndex = vertices.IndexOf(existingVertex);
-                    triangles.Add(new Triangle(activeEdge.VertexIndex1, activeEdge.VertexIndex2, existingVertexIndex));
+                    // activeEdgeが複数の三角形に所属している場合、中点を追加して分割
+                    SplitTrianglesByAddingMidpoint(trianglesContainingEdge);
                 }
                 else
                 {
-                    int newVertexIndex = vertices.Count;
-                    vertices.Add(new Vertex(newX, newY));
-                    triangles.Add(new Triangle(activeEdge.VertexIndex1, activeEdge.VertexIndex2, newVertexIndex));
+                    // 通常の処理：新しい頂点を追加して三角形を作成
+                    Vertex worldPos = ScreenToWorld(mouseLocation);
+                    int newX = worldPos.X / GRID_SIZE * GRID_SIZE;
+                    int newY = worldPos.Y / GRID_SIZE * GRID_SIZE;
+
+                    newX = Math.Max(0, Math.Min(WORLD_WIDTH, newX));
+                    newY = Math.Max(0, Math.Min(WORLD_HEIGHT, newY));
+
+                    Vertex existingVertex = vertices.FirstOrDefault(v => v.X == newX && v.Y == newY);
+
+                    if (existingVertex != null)
+                    {
+                        int existingVertexIndex = vertices.IndexOf(existingVertex);
+                        triangles.Add(new Triangle(activeEdge.VertexIndex1, activeEdge.VertexIndex2, existingVertexIndex));
+                    }
+                    else
+                    {
+                        int newVertexIndex = vertices.Count;
+                        vertices.Add(new Vertex(newX, newY));
+                        triangles.Add(new Triangle(activeEdge.VertexIndex1, activeEdge.VertexIndex2, newVertexIndex));
+                    }
+                }
+            }
+        }
+
+        private void SplitMirrorBoundaryEdge()
+        {
+            int v1 = activeEdge.VertexIndex1;
+            int v2 = activeEdge.VertexIndex2;
+
+            // 中点の座標を計算（X座標は0のまま）
+            int midX = 0;  // 鏡像境界上なのでX=0
+            int midY = (vertices[v1].Y + vertices[v2].Y) / 2;
+            midY = midY / GRID_SIZE * GRID_SIZE;  // グリッドにスナップ
+
+            // 中点が既存の頂点と重複しないかチェック
+            Vertex existingMidpoint = vertices.FirstOrDefault(v => v.X == midX && v.Y == midY);
+            int midpointIndex;
+
+            if (existingMidpoint != null)
+            {
+                midpointIndex = vertices.IndexOf(existingMidpoint);
+            }
+            else
+            {
+                midpointIndex = vertices.Count;
+                vertices.Add(new Vertex(midX, midY));
+            }
+
+            // このエッジを含む三角形を取得
+            var trianglesContainingEdge = triangles.Where(t =>
+                ((t.V1 == v1 && t.V2 == v2) || (t.V1 == v2 && t.V2 == v1) ||
+                 (t.V2 == v1 && t.V3 == v2) || (t.V2 == v2 && t.V3 == v1) ||
+                 (t.V3 == v1 && t.V1 == v2) || (t.V3 == v2 && t.V1 == v1))
+            ).ToList();
+
+            // 各三角形を2つに分割
+            foreach (var triangle in trianglesContainingEdge.ToList())
+            {
+                // ActiveEdgeの反対側の頂点を取得
+                int oppositeVertex = -1;
+                if ((triangle.V1 == v1 || triangle.V1 == v2) && (triangle.V2 == v1 || triangle.V2 == v2))
+                {
+                    oppositeVertex = triangle.V3;
+                }
+                else if ((triangle.V2 == v1 || triangle.V2 == v2) && (triangle.V3 == v1 || triangle.V3 == v2))
+                {
+                    oppositeVertex = triangle.V1;
+                }
+                else if ((triangle.V3 == v1 || triangle.V3 == v2) && (triangle.V1 == v1 || triangle.V1 == v2))
+                {
+                    oppositeVertex = triangle.V2;
+                }
+
+                if (oppositeVertex != -1)
+                {
+                    // 元の三角形を削除
+                    triangles.Remove(triangle);
+
+                    // 2つの新しい三角形を作成
+                    triangles.Add(new Triangle(v1, midpointIndex, oppositeVertex));
+                    triangles.Add(new Triangle(midpointIndex, v2, oppositeVertex));
                 }
             }
         }
