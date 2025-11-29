@@ -108,10 +108,15 @@ namespace lowpoly_mask_builder
 
         private void DrawMirrorVertex(Graphics g, Vertex vertex)
         {
+            // 無効な座標（マージされた頂点）の場合は描画しない
+            if (vertex.X == -1 && vertex.Y == -1)
+            {
+                return;
+            }
+
             Point screenPos = MirrorWorldToScreen(vertex);
             int radius = POINT_RADIUS;
 
-            // Z座標に応じたグレースケールの色を使用
             int grayValue = (int)((float)vertex.Z / 100.0f * 255.0f);
             grayValue = Math.Max(0, Math.Min(255, grayValue));
             Brush brush = new SolidBrush(Color.FromArgb(grayValue, grayValue, grayValue));
@@ -170,21 +175,24 @@ namespace lowpoly_mask_builder
 
         private void DrawVertex(Graphics g, Vertex vertex, bool isSelected)
         {
+            // 無効な座標（マージされた頂点）の場合は描画しない
+            if (vertex.X == -1 && vertex.Y == -1)
+            {
+                return;
+            }
+
             Point screenPos = WorldToScreen(vertex);
             int radius = isSelected ? POINT_RADIUS + 2 : POINT_RADIUS;
 
             Brush brush;
             if (isSelected)
             {
-                // 選択された頂点は赤のまま
                 brush = Brushes.Red;
             }
             else
             {
-                // Z座標に応じてグレースケールで色を計算
                 int grayValue = (int)((float)vertex.Z / 100.0f * 255.0f);
-                grayValue = Math.Max(0, Math.Min(255, grayValue)); // 0～255の範囲に制限
-
+                grayValue = Math.Max(0, Math.Min(255, grayValue));
                 brush = new SolidBrush(Color.FromArgb(grayValue, grayValue, grayValue));
             }
 
@@ -312,44 +320,43 @@ namespace lowpoly_mask_builder
 
         private void MergeVerticesAtSamePosition(Vertex primaryVertex)
         {
-            List<int> indicesToRemove = new List<int>();
+            List<int> indicesToOverwrite = new List<int>();
 
-            // primaryVertexと同じ座標を持つ他の頂点のインデックスを記録
+            // primaryVertexと同じ座標を持つ他の頂点のインデックスを取得
+            int primaryIndex = vertices.IndexOf(primaryVertex);
             for (int i = 0; i < vertices.Count; i++)
             {
-                if (vertices[i] != primaryVertex && vertices[i].X == primaryVertex.X && vertices[i].Y == primaryVertex.Y)
+                if (i != primaryIndex && vertices[i].X == primaryVertex.X && vertices[i].Y == primaryVertex.Y)
                 {
-                    indicesToRemove.Add(i);
+                    indicesToOverwrite.Add(i);
                 }
             }
 
-            if (indicesToRemove.Count > 0)
+            if (indicesToOverwrite.Count > 0)
             {
-                // 削除するインデックスを降順にソートして、削除の影響を最小限にする
-                indicesToRemove.Sort((a, b) => b.CompareTo(a));
-
-                // 重複する頂点を削除
-                foreach (int indexToRemove in indicesToRemove)
-                {
-                    vertices.RemoveAt(indexToRemove);
-                }
-
-                // 三角形の頂点インデックスを修正
-                int primaryIndex = vertices.IndexOf(primaryVertex);
+                // 三角形の頂点インデックスをprimaryIndexに上書き
                 foreach (var triangle in triangles)
                 {
-                    if (indicesToRemove.Contains(triangle.V1))
+                    if (indicesToOverwrite.Contains(triangle.V1))
                     {
                         triangle.V1 = primaryIndex;
                     }
-                    if (indicesToRemove.Contains(triangle.V2))
+                    if (indicesToOverwrite.Contains(triangle.V2))
                     {
                         triangle.V2 = primaryIndex;
                     }
-                    if (indicesToRemove.Contains(triangle.V3))
+                    if (indicesToOverwrite.Contains(triangle.V3))
                     {
                         triangle.V3 = primaryIndex;
                     }
+                }
+
+                // indicesToOverwriteの頂点を無効な座標に設定してレンダリングされないようにする
+                foreach (int index in indicesToOverwrite)
+                {
+                    vertices[index].X = -1;
+                    vertices[index].Y = -1;
+                    vertices[index].Z = -1;
                 }
             }
         }
