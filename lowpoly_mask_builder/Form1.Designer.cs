@@ -45,10 +45,12 @@ namespace lowpoly_mask_builder
             // 
             // pictureBoxLeft
             // 
+            this.pictureBoxLeft.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
             this.pictureBoxLeft.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.pictureBoxLeft.Location = new System.Drawing.Point(4, 28);
             this.pictureBoxLeft.Name = "pictureBoxLeft";
-            this.pictureBoxLeft.Size = new System.Drawing.Size(600, 788);
+            this.pictureBoxLeft.Size = new System.Drawing.Size(936, 1009);
             this.pictureBoxLeft.TabIndex = 0;
             this.pictureBoxLeft.TabStop = false;
             // 
@@ -58,7 +60,7 @@ namespace lowpoly_mask_builder
             this.fileToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1286, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1904, 24);
             this.menuStrip1.TabIndex = 1;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -100,10 +102,12 @@ namespace lowpoly_mask_builder
             // 
             // pictureBoxRight
             // 
+            this.pictureBoxRight.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
             this.pictureBoxRight.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.pictureBoxRight.Location = new System.Drawing.Point(604, 28);
+            this.pictureBoxRight.Location = new System.Drawing.Point(944, 28);
             this.pictureBoxRight.Name = "pictureBoxRight";
-            this.pictureBoxRight.Size = new System.Drawing.Size(600, 788);
+            this.pictureBoxRight.Size = new System.Drawing.Size(936, 1009);
             this.pictureBoxRight.TabIndex = 0;
             this.pictureBoxRight.TabStop = false;
             this.pictureBoxRight.Paint += new System.Windows.Forms.PaintEventHandler(this.pictureBoxRight_Paint);
@@ -113,7 +117,7 @@ namespace lowpoly_mask_builder
             // 
             // vScrollBarZ
             // 
-            this.vScrollBarZ.Location = new System.Drawing.Point(1228, 32);
+            this.vScrollBarZ.Location = new System.Drawing.Point(1876, 28);
             this.vScrollBarZ.Name = "vScrollBarZ";
             this.vScrollBarZ.Size = new System.Drawing.Size(24, 780);
             this.vScrollBarZ.TabIndex = 2;
@@ -123,13 +127,14 @@ namespace lowpoly_mask_builder
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1286, 820);
+            this.ClientSize = new System.Drawing.Size(1904, 1041);
             this.Controls.Add(this.vScrollBarZ);
             this.Controls.Add(this.pictureBoxRight);
             this.Controls.Add(this.pictureBoxLeft);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "Form1";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeft)).EndInit();
             this.menuStrip1.ResumeLayout(false);

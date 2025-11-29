@@ -6,15 +6,14 @@ using System.Windows.Forms;
 
 namespace lowpoly_mask_builder
 {
-    
-
     public partial class Form1 : Form
     {
         private List<Vertex> vertices = new List<Vertex>();
         private List<Triangle> triangles = new List<Triangle>();
         private Vertex selectedVertex = null;
         private bool isDragging = false;
-        private Point dragStartPos;
+        private Edge activeEdge = null;
+        private bool isAddingTriangle = false;
 
         // 定数
         private const int GRID_SIZE = 1;
@@ -39,6 +38,10 @@ namespace lowpoly_mask_builder
 
             triangles.Add(new Triangle(0, 1, 2));
 
+            selectedVertex = null;
+            activeEdge = null;  // 明示的にnullを設定
+            isAddingTriangle = false;  // これも初期化
+            activeEdge = null;
             pictureBoxRight.Invalidate();
         }
 
@@ -54,6 +57,15 @@ namespace lowpoly_mask_builder
             foreach (var triangle in triangles)
             {
                 DrawTriangle(g, triangle);
+            }
+
+            // 新しい三角形の追加中に仮の三角形を描画
+            if ( activeEdge != null)
+            {
+                if (isAddingTriangle)
+                {
+                    DrawTemporaryTriangle(g);
+                }
             }
 
             // 頂点を描画
@@ -81,10 +93,29 @@ namespace lowpoly_mask_builder
             Point p2 = WorldToScreen(vertices[triangle.V2]);
             Point p3 = WorldToScreen(vertices[triangle.V3]);
 
-            Pen pen = new Pen(Color.Black, 1.5f);
-            g.DrawLine(pen, p1, p2);
-            g.DrawLine(pen, p2, p3);
-            g.DrawLine(pen, p3, p1);
+            // 三角形の各辺について、activeEdgeと一致するかどうかを個別に判定
+            bool isEdge1Active = activeEdge != null &&
+                ((triangle.V1 == activeEdge.VertexIndex1 && triangle.V2 == activeEdge.VertexIndex2) ||
+                 (triangle.V1 == activeEdge.VertexIndex2 && triangle.V2 == activeEdge.VertexIndex1));
+
+            bool isEdge2Active = activeEdge != null &&
+                ((triangle.V2 == activeEdge.VertexIndex1 && triangle.V3 == activeEdge.VertexIndex2) ||
+                 (triangle.V2 == activeEdge.VertexIndex2 && triangle.V3 == activeEdge.VertexIndex1));
+
+            bool isEdge3Active = activeEdge != null &&
+                ((triangle.V3 == activeEdge.VertexIndex1 && triangle.V1 == activeEdge.VertexIndex2) ||
+                 (triangle.V3 == activeEdge.VertexIndex2 && triangle.V1 == activeEdge.VertexIndex1));
+
+            // 各辺を個別に描画し、アクティブな辺のみ太線で描画
+            DrawEdge(g, p1, p2, isEdge1Active);
+            DrawEdge(g, p2, p3, isEdge2Active);
+            DrawEdge(g, p3, p1, isEdge3Active);
+        }
+        private void DrawEdge(Graphics g, Point start, Point end, bool isActive)
+        {
+            float penWidth = isActive ? 3.0f : 1.5f;
+            Pen pen = new Pen(Color.Black, penWidth);
+            g.DrawLine(pen, start, end);
         }
 
         private void DrawVertex(Graphics g, Vertex vertex, bool isSelected)
@@ -102,24 +133,23 @@ namespace lowpoly_mask_builder
             return new Point(vertex.X, vertex.Y);
         }
 
-        private Vertex ScreenToWorld(Point screenPoint)
-        {
-            // 画面座標をワールド座標に変換（現在は1:1）
-            return new Vertex(screenPoint.X, screenPoint.Y);
-        }
-
         private void pictureBoxRight_MouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
-                // 頂点の選択またはドラッグ開始
                 Vertex nearestVertex = FindNearestVertex(e.Location, 10);
                 if (nearestVertex != null)
                 {
+                    // 頂点を選択した場合
                     selectedVertex = nearestVertex;
                     isDragging = true;
-                    dragStartPos = e.Location;
+                    isAddingTriangle = false;
                     vScrollBarZ.Value = selectedVertex.Z;
+                }
+                else if (activeEdge != null)
+                {
+                    // アクティブな辺を選択した場合、新しい三角形の追加を開始
+                    isAddingTriangle = true;
                 }
                 pictureBoxRight.Invalidate();
             }
@@ -129,24 +159,166 @@ namespace lowpoly_mask_builder
         {
             if (isDragging && selectedVertex != null)
             {
-                // グリッドにスナップして頂点を移動
+                // 頂点の移動ドラッグ処理
                 int newX = e.X / GRID_SIZE * GRID_SIZE;
                 int newY = e.Y / GRID_SIZE * GRID_SIZE;
 
-                // 範囲制限：X=0-200, Y=0-300
                 newX = Math.Max(0, Math.Min(200, newX));
                 newY = Math.Max(0, Math.Min(300, newY));
 
                 selectedVertex.X = newX;
                 selectedVertex.Y = newY;
-
                 pictureBoxRight.Invalidate();
             }
+            else if (!isAddingTriangle)  // 新しい三角形の追加ドラッグ中でない場合のみ
+            {
+                // 辺のアクティブ判定を行う
+                Edge nearestEdge = FindNearestEdgeMiddle(e.Location, EDGE_ACTIVE_DISTANCE);
+                if (nearestEdge != activeEdge)
+                {
+                    activeEdge = nearestEdge;
+                }
+            }
+            // isAddingTriangleがtrueの場合は、辺のアクティブ判定を行わない
+            pictureBoxRight.Invalidate();
         }
 
         private void pictureBoxRight_MouseUp(object sender, MouseEventArgs e)
         {
+            if (isAddingTriangle && activeEdge != null)
+            {
+                AddTriangleFromActiveEdge(e.Location);
+            }
+
+            activeEdge = null;
+            isAddingTriangle = false;
             isDragging = false;
+            pictureBoxRight.Invalidate();
+        }
+
+        private Edge FindNearestEdgeMiddle(Point mousePoint, int maxDistance)
+        {
+            Edge closestEdge = null;
+            double minDistance = double.MaxValue;
+
+            foreach (var triangle in triangles)
+            {
+                var edges = new[] {
+                    new Edge(triangle.V1, triangle.V2),
+                    new Edge(triangle.V2, triangle.V3),
+                    new Edge(triangle.V3, triangle.V1)
+                };
+
+                foreach (var edge in edges)
+                {
+                    if (IsMouseNearEdgeMiddle(edge, mousePoint, maxDistance))
+                    {
+                        double distance = CalculateDistanceToEdge(edge, mousePoint);
+                        if (distance < minDistance)
+                        {
+                            minDistance = distance;
+                            closestEdge = edge;
+                        }
+                    }
+                }
+            }
+
+            return closestEdge;
+        }
+
+        private bool IsMouseNearEdgeMiddle(Edge edge, Point mousePoint, int maxDistance)
+        {
+            Point p1 = WorldToScreen(vertices[edge.VertexIndex1]);
+            Point p2 = WorldToScreen(vertices[edge.VertexIndex2]);
+
+            // 辺の中央点を計算
+            int midX = (p1.X + p2.X) / 2;
+            int midY = (p1.Y + p2.Y) / 2;
+
+            // マウスカーソルと辺の中央点との距離を計算
+            int dx = mousePoint.X - midX;
+            int dy = mousePoint.Y - midY;
+            double distanceToMiddle = Math.Sqrt(dx * dx + dy * dy);
+
+            // 辺の中央点から指定された距離（maxDistance）以内にあるかチェック
+            return distanceToMiddle <= maxDistance;
+        }
+
+        private double CalculateDistanceToEdge(Edge edge, Point point)
+        {
+            Point p1 = WorldToScreen(vertices[edge.VertexIndex1]);
+            Point p2 = WorldToScreen(vertices[edge.VertexIndex2]);
+
+            int dx = p2.X - p1.X;
+            int dy = p2.Y - p1.Y;
+            double lengthSquared = dx * dx + dy * dy;
+
+            if (lengthSquared == 0) return Distance(p1, point);
+
+            double t = Math.Max(0, Math.Min(1, ((point.X - p1.X) * dx + (point.Y - p1.Y) * dy) / lengthSquared));
+            Point projection = new Point(p1.X + (int)(t * dx), p1.Y + (int)(t * dy));
+
+            return Distance(projection, point);
+        }
+
+        private double Distance(Point a, Point b)
+        {
+            int dx = a.X - b.X;
+            int dy = a.Y - b.Y;
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
+
+        private void AddTriangleFromActiveEdge(Point mouseLocation)
+        {
+            int newX = mouseLocation.X / GRID_SIZE * GRID_SIZE;
+            int newY = mouseLocation.Y / GRID_SIZE * GRID_SIZE;
+
+            newX = Math.Max(0, Math.Min(200, newX));
+            newY = Math.Max(0, Math.Min(300, newY));
+
+            // 同じ座標の既存の頂点を探す
+            Vertex existingVertex = vertices.FirstOrDefault(v => v.X == newX && v.Y == newY);
+
+            if (existingVertex != null)
+            {
+                // 既存の頂点を使用する
+                int existingVertexIndex = vertices.IndexOf(existingVertex);
+                triangles.Add(new Triangle(activeEdge.VertexIndex1, activeEdge.VertexIndex2, existingVertexIndex));
+            }
+            else
+            {
+                // 新しい頂点を追加
+                int newVertexIndex = vertices.Count;
+                vertices.Add(new Vertex(newX, newY));
+                triangles.Add(new Triangle(activeEdge.VertexIndex1, activeEdge.VertexIndex2, newVertexIndex));
+            }
+
+            isAddingTriangle = false;
+        }
+
+        private void DrawTemporaryTriangle(Graphics g)
+        {
+            if (activeEdge == null) return;
+
+            Point p1 = WorldToScreen(vertices[activeEdge.VertexIndex1]);
+            Point p2 = WorldToScreen(vertices[activeEdge.VertexIndex2]);
+            Point mousePos = pictureBoxRight.PointToClient(Control.MousePosition);
+
+            Pen tempPen = new Pen(Color.Green, 2.0f);
+            g.DrawLine(tempPen, p1, p2);
+            g.DrawLine(tempPen, p2, mousePos);
+            g.DrawLine(tempPen, mousePos, p1);
+        }
+
+        private Triangle GetTriangleContainingEdge(Edge edge)
+        {
+            return triangles.FirstOrDefault(t =>
+                (t.V1 == edge.VertexIndex1 && t.V2 == edge.VertexIndex2) ||
+                (t.V2 == edge.VertexIndex1 && t.V1 == edge.VertexIndex2) ||
+                (t.V2 == edge.VertexIndex2 && t.V3 == edge.VertexIndex1) ||
+                (t.V3 == edge.VertexIndex2 && t.V2 == edge.VertexIndex1) ||
+                (t.V3 == edge.VertexIndex1 && t.V1 == edge.VertexIndex2) ||
+                (t.V1 == edge.VertexIndex2 && t.V3 == edge.VertexIndex1));
         }
 
         private Vertex FindNearestVertex(Point screenPoint, int maxDistance)
@@ -182,11 +354,21 @@ namespace lowpoly_mask_builder
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
         {
             InitializeModel();
-            selectedVertex = null;
-            vScrollBarZ.Value = 0;
+        }
+
+        private class Edge
+        {
+            public int VertexIndex1 { get; set; }
+            public int VertexIndex2 { get; set; }
+
+            public Edge(int v1, int v2)
+            {
+                VertexIndex1 = v1;
+                VertexIndex2 = v2;
+            }
         }
     }
-    // 頂点クラス
+
     public class Vertex
     {
         public int X { get; set; }
@@ -201,10 +383,9 @@ namespace lowpoly_mask_builder
         }
     }
 
-    // 三角形クラス
     public class Triangle
     {
-        public int V1 { get; set; } // 頂点インデックス
+        public int V1 { get; set; }
         public int V2 { get; set; }
         public int V3 { get; set; }
 
