@@ -302,12 +302,24 @@ namespace lowpoly_mask_builder
 
             Point p1 = WorldToScreen(vertices[activeEdge.VertexIndex1]);
             Point p2 = WorldToScreen(vertices[activeEdge.VertexIndex2]);
+
+            // マウス位置を取得
             Point mousePos = pictureBoxRight.PointToClient(Control.MousePosition);
+
+            // AddTriangleFromActiveEdgeと同じスナップとクロッピングを適用
+            int snappedX = mousePos.X / GRID_SIZE * GRID_SIZE;
+            int snappedY = mousePos.Y / GRID_SIZE * GRID_SIZE;
+
+            // 最大エリアの制限を適用
+            snappedX = Math.Max(0, Math.Min(200, snappedX));
+            snappedY = Math.Max(0, Math.Min(300, snappedY));
+
+            Point snappedMousePos = new Point(snappedX, snappedY);
 
             Pen tempPen = new Pen(Color.Green, 2.0f);
             g.DrawLine(tempPen, p1, p2);
-            g.DrawLine(tempPen, p2, mousePos);
-            g.DrawLine(tempPen, mousePos, p1);
+            g.DrawLine(tempPen, p2, snappedMousePos);
+            g.DrawLine(tempPen, snappedMousePos, p1);
         }
 
         private Triangle GetTriangleContainingEdge(Edge edge)
