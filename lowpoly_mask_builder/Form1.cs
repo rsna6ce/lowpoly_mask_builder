@@ -665,6 +665,7 @@ namespace lowpoly_mask_builder
             if (selectedVertex != null)
             {
                 selectedVertex.Z = vScrollBarZ.Maximum - vScrollBarZ.Value;
+                DrawMirrorImage();
             }
         }
 
