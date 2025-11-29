@@ -197,11 +197,63 @@ namespace lowpoly_mask_builder
                 AddTriangleFromActiveEdge(e.Location);
             }
 
+            // ドラッグ終了時に頂点のマージ処理を行う
+            if (isDragging && selectedVertex != null)
+            {
+                MergeVerticesAtSamePosition(selectedVertex);
+            }
+
             activeEdge = null;
             isAddingTriangle = false;
             isDragging = false;
             pictureBoxRight.Invalidate();
         }
+
+        private void MergeVerticesAtSamePosition(Vertex primaryVertex)
+        {
+            List<int> indicesToRemove = new List<int>();
+
+            // primaryVertexと同じ座標を持つ他の頂点のインデックスを記録
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                if (vertices[i] != primaryVertex && vertices[i].X == primaryVertex.X && vertices[i].Y == primaryVertex.Y)
+                {
+                    indicesToRemove.Add(i);
+                }
+            }
+
+            if (indicesToRemove.Count > 0)
+            {
+                // 削除するインデックスを降順にソートして、削除の影響を最小限にする
+                indicesToRemove.Sort((a, b) => b.CompareTo(a));
+
+                // 重複する頂点を削除
+                foreach (int indexToRemove in indicesToRemove)
+                {
+                    vertices.RemoveAt(indexToRemove);
+                }
+
+                // 三角形の頂点インデックスを修正
+                int primaryIndex = vertices.IndexOf(primaryVertex);
+                foreach (var triangle in triangles)
+                {
+                    if (indicesToRemove.Contains(triangle.V1))
+                    {
+                        triangle.V1 = primaryIndex;
+                    }
+                    if (indicesToRemove.Contains(triangle.V2))
+                    {
+                        triangle.V2 = primaryIndex;
+                    }
+                    if (indicesToRemove.Contains(triangle.V3))
+                    {
+                        triangle.V3 = primaryIndex;
+                    }
+                }
+            }
+        }
+
+
 
         private void AddTriangleFromActiveEdge(Point mouseLocation)
         {
