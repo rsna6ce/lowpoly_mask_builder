@@ -117,9 +117,9 @@ namespace lowpoly_mask_builder
             // 
             // vScrollBarZ
             // 
-            this.vScrollBarZ.Location = new System.Drawing.Point(1876, 28);
+            this.vScrollBarZ.Location = new System.Drawing.Point(1880, 28);
             this.vScrollBarZ.Name = "vScrollBarZ";
-            this.vScrollBarZ.Size = new System.Drawing.Size(24, 780);
+            this.vScrollBarZ.Size = new System.Drawing.Size(20, 780);
             this.vScrollBarZ.TabIndex = 2;
             this.vScrollBarZ.Scroll += new System.Windows.Forms.ScrollEventHandler(this.vScrollBarZ_Scroll);
             // 
@@ -136,6 +136,7 @@ namespace lowpoly_mask_builder
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Form1";
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeft)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();

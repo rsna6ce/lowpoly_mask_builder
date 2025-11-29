@@ -144,7 +144,7 @@ namespace lowpoly_mask_builder
                     selectedVertex = nearestVertex;
                     isDragging = true;
                     isAddingTriangle = false;
-                    vScrollBarZ.Value = selectedVertex.Z;
+                    vScrollBarZ.Value = vScrollBarZ.Maximum - selectedVertex.Z;
                 }
                 else if (activeEdge != null)
                 {
@@ -347,7 +347,7 @@ namespace lowpoly_mask_builder
         {
             if (selectedVertex != null)
             {
-                selectedVertex.Z = vScrollBarZ.Value;
+                selectedVertex.Z = vScrollBarZ.Maximum - vScrollBarZ.Value;
             }
         }
 
