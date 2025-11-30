@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace lowpoly_mask_builder
 {
@@ -14,6 +16,7 @@ namespace lowpoly_mask_builder
         private bool isDragging = false;
         private Edge activeEdge = null;
         private bool isAddingTriangle = false;
+        private string currentFileName = null;
 
         // 定数
         private const int GRID_SIZE = 1;
@@ -128,17 +131,18 @@ namespace lowpoly_mask_builder
         private void DrawGrid(Graphics g)
         {
             Pen gridPen = new Pen(Color.FromArgb(200, 200, 200));
-            float scaleX = (float)pictureBoxRight.Width / WORLD_WIDTH;
-            float scaleY = (float)pictureBoxRight.Height / WORLD_HEIGHT;
 
             for (int x = 0; x <= WORLD_WIDTH; x += 2)
             {
-                int screenX = (int)(x * scaleX);
+                int screenX = (int)(x * (float)pictureBoxRight.Width / WORLD_WIDTH);
                 g.DrawLine(gridPen, screenX, 0, screenX, pictureBoxRight.Height);
             }
+
+            // Y座標を反転してグリッドを描画
             for (int y = 0; y <= WORLD_HEIGHT; y += 2)
             {
-                int screenY = (int)(y * scaleY);
+                // y=0が下部に来るように反転させる
+                int screenY = (int)((WORLD_HEIGHT - y) * (float)pictureBoxRight.Height / WORLD_HEIGHT);
                 g.DrawLine(gridPen, 0, screenY, pictureBoxRight.Width, screenY);
             }
         }
@@ -204,8 +208,11 @@ namespace lowpoly_mask_builder
         {
             float scaleX = (float)pictureBoxRight.Width / WORLD_WIDTH;
             float scaleY = (float)pictureBoxRight.Height / WORLD_HEIGHT;
+
+            // Y座標を反転させる：ワールド座標のY=0が画面の下部に来るようにする
             int screenX = (int)(vertex.X * scaleX);
-            int screenY = (int)(vertex.Y * scaleY);
+            int screenY = (int)((WORLD_HEIGHT - vertex.Y) * scaleY);
+
             return new Point(screenX, screenY);
         }
 
@@ -213,8 +220,11 @@ namespace lowpoly_mask_builder
         {
             float scaleX = (float)pictureBoxRight.Width / WORLD_WIDTH;
             float scaleY = (float)pictureBoxRight.Height / WORLD_HEIGHT;
+
+            // 画面座標からワールド座標への変換でY座標を反転させる
             int worldX = (int)(screenPoint.X / scaleX);
-            int worldY = (int)(screenPoint.Y / scaleY);
+            int worldY = WORLD_HEIGHT - (int)(screenPoint.Y / scaleY);
+
             return new Vertex(worldX, worldY);
         }
 
@@ -679,6 +689,7 @@ namespace lowpoly_mask_builder
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
         {
             InitializeModel();
+            DrawMirrorImage();
         }
 
         private class Edge
@@ -695,12 +706,128 @@ namespace lowpoly_mask_builder
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            using (OpenFileDialog openDialog = new OpenFileDialog())
+            {
+                openDialog.Filter = "Lowpoly Mask Builderファイル (*.lmb)|*.lmb|すべてのファイル (*.*)|*.*";
+                openDialog.Title = "ファイルを開く";
 
+                if (openDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        string jsonText = File.ReadAllText(openDialog.FileName);
+                        var data = JsonConvert.DeserializeObject<MaskBuilderFileData>(jsonText);
+
+                        if (data == null)
+                        {
+                            MessageBox.Show("ファイルが正しく読み込めませんでした。ファイル形式が不正です。", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+
+                        if (data.Application != "lowpoly_mask_builder_v1")
+                        {
+                            MessageBox.Show("このファイルはLowpoly Mask Builderの保存形式と異なります。", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
+                        }
+
+                        vertices.Clear();
+                        triangles.Clear();
+
+                        foreach (var vertexData in data.Vertices)
+                        {
+                            vertices.Add(new Vertex(vertexData.X, vertexData.Y, vertexData.Z));
+                        }
+
+                        foreach (var triangleData in data.Triangles)
+                        {
+                            triangles.Add(new Triangle(triangleData.V1, triangleData.V2, triangleData.V3));
+                        }
+
+                        currentFileName = openDialog.FileName;
+                        this.Text = Path.GetFileName(currentFileName) + " - Lowpoly Mask Builder";
+
+                        pictureBoxRight.Invalidate();
+                        DrawMirrorImage();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"ファイルの読み込み中にエラーが発生しました。\n{ex.Message}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
         }
 
         private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            using (SaveFileDialog saveDialog = new SaveFileDialog())
+            {
+                saveDialog.Filter = "Lowpoly Mask Builderファイル (*.lmb)|*.lmb";
+                saveDialog.Title = "名前を付けて保存";
 
+                string defaultFileName = GetDefaultFileName();
+                saveDialog.FileName = defaultFileName;
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    if (File.Exists(saveDialog.FileName))
+                    {
+                        DialogResult result = MessageBox.Show(
+                            "指定されたファイルは既に存在します。上書きしますか？",
+                            "上書きの確認",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question);
+
+                        if (result != DialogResult.Yes)
+                            return;
+                    }
+
+                    try
+                    {
+                        SaveFile(saveDialog.FileName);
+                        currentFileName = saveDialog.FileName;
+                        this.Text = Path.GetFileName(currentFileName) + " - Lowpoly Mask Builder";
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"ファイルの保存中にエラーが発生しました。\n{ex.Message}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void SaveFile(string fileName)
+        {
+            var data = new MaskBuilderFileData
+            {
+                Application = "lowpoly_mask_builder_v1",
+                Vertices = vertices.Select(v => new VertexData { X = v.X, Y = v.Y, Z = v.Z }).ToList(),
+                Triangles = triangles.Select(t => new TriangleData { V1 = t.V1, V2 = t.V2, V3 = t.V3 }).ToList()
+            };
+
+            string jsonText = JsonConvert.SerializeObject(data, Formatting.Indented);
+            File.WriteAllText(fileName, jsonText);
+        }
+
+        private string GetDefaultFileName()
+        {
+            if (!string.IsNullOrEmpty(currentFileName))
+            {
+                return currentFileName;
+            }
+
+            string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            string baseName = "lowpoly_mask_builder";
+            int counter = 1;
+
+            while (true)
+            {
+                string candidateFileName = Path.Combine(documentsPath, $"{baseName}{counter:D3}.lmb");
+                if (!File.Exists(candidateFileName))
+                {
+                    return candidateFileName;
+                }
+                counter++;
+            }
         }
     }
 
@@ -730,5 +857,26 @@ namespace lowpoly_mask_builder
             V2 = v2;
             V3 = v3;
         }
+    }
+
+    public class MaskBuilderFileData
+    {
+        public string Application { get; set; }
+        public List<VertexData> Vertices { get; set; }
+        public List<TriangleData> Triangles { get; set; }
+    }
+
+    public class VertexData
+    {
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int Z { get; set; }
+    }
+
+    public class TriangleData
+    {
+        public int V1 { get; set; }
+        public int V2 { get; set; }
+        public int V3 { get; set; }
     }
 }
