@@ -1357,6 +1357,18 @@ namespace lowpoly_mask_builder
                 nz /= length;
             }
         }
+
+        private void transparentToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            transparentToolStripMenuItem.Checked = !transparentToolStripMenuItem.Checked;
+            if (transparentToolStripMenuItem.Checked)
+            {
+                this.TransparencyKey = Color.LightCyan;
+            } else
+            {
+                this.TransparencyKey = Color.Empty;
+            }
+        }
     }
 
     public class Vertex

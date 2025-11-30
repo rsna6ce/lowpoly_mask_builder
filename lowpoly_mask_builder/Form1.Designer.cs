@@ -42,6 +42,8 @@ namespace lowpoly_mask_builder
             this.statusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.numericUpDownZ = new System.Windows.Forms.NumericUpDown();
             this.buttonPreview = new System.Windows.Forms.Button();
+            this.optionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.transparentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeft)).BeginInit();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRight)).BeginInit();
@@ -61,7 +63,8 @@ namespace lowpoly_mask_builder
             // menuStrip1
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem});
+            this.fileToolStripMenuItem,
+            this.optionToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(1252, 24);
@@ -165,6 +168,21 @@ namespace lowpoly_mask_builder
             this.buttonPreview.Visible = false;
             this.buttonPreview.Click += new System.EventHandler(this.buttonPreview_Click);
             // 
+            // optionToolStripMenuItem
+            // 
+            this.optionToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.transparentToolStripMenuItem});
+            this.optionToolStripMenuItem.Name = "optionToolStripMenuItem";
+            this.optionToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
+            this.optionToolStripMenuItem.Text = "Option";
+            // 
+            // transparentToolStripMenuItem
+            // 
+            this.transparentToolStripMenuItem.Name = "transparentToolStripMenuItem";
+            this.transparentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.transparentToolStripMenuItem.Text = "Transparent";
+            this.transparentToolStripMenuItem.Click += new System.EventHandler(this.transparentToolStripMenuItem_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -181,7 +199,6 @@ namespace lowpoly_mask_builder
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Lowpoly mask builder";
-            this.TransparencyKey = System.Drawing.Color.LightCyan;
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeft)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -209,6 +226,8 @@ namespace lowpoly_mask_builder
         private System.Windows.Forms.ToolStripStatusLabel statusLabel1;
         private System.Windows.Forms.NumericUpDown numericUpDownZ;
         private System.Windows.Forms.Button buttonPreview;
+        private System.Windows.Forms.ToolStripMenuItem optionToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem transparentToolStripMenuItem;
     }
 }
 
