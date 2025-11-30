@@ -235,25 +235,22 @@ namespace lowpoly_mask_builder
                 Vertex nearestVertex = FindNearestVertex(e.Location, 10);
                 if (nearestVertex != null)
                 {
-                    if (nearestVertex == selectedVertex)
-                    {
-                        // すでに選択されている頂点が再度クリックされた場合、選択を解除
-                        selectedVertex = null;
-                        isDragging = false;
-                        vScrollBarZ.Value = vScrollBarZ.Maximum; // スライダーを最上部に設定
-                    }
-                    else
-                    {
-                        // 異なる頂点が選択された場合、その頂点を新たに選択
-                        selectedVertex = nearestVertex;
-                        isDragging = true;
-                        vScrollBarZ.Value = vScrollBarZ.Maximum - selectedVertex.Z; // Z座標に対応した位置に設定
-                    }
+                    // 異なる頂点が選択された場合、その頂点を新たに選択
+                    selectedVertex = nearestVertex;
+                    isDragging = true;
+                    vScrollBarZ.Value = vScrollBarZ.Maximum - selectedVertex.Z; // Z座標に対応した位置に設定
                     isAddingTriangle = false;
                 }
                 else if (activeEdge != null)
                 {
                     isAddingTriangle = true;
+                }
+                else
+                {
+                    // すでに選択されている頂点が再度クリックされた場合、選択を解除
+                    selectedVertex = null;
+                    isDragging = false;
+                    vScrollBarZ.Value = vScrollBarZ.Maximum; // スライダーを最上部に設定
                 }
                 pictureBoxRight.Invalidate();
             }
