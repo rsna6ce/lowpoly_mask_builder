@@ -181,6 +181,7 @@ namespace lowpoly_mask_builder
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Lowpoly mask builder";
+            this.TransparencyKey = System.Drawing.Color.LightCyan;
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeft)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();

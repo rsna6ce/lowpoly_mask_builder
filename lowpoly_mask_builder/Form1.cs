@@ -40,7 +40,7 @@ namespace lowpoly_mask_builder
         {
             // CheckBoxを作成
             heightMapCheckBox = new CheckBox();
-            heightMapCheckBox.Text = "ハイトマップ表示";
+            heightMapCheckBox.Text = "Hightmap mode  ";
             heightMapCheckBox.CheckedChanged += HeightMapCheckBox_CheckedChanged;
 
             // ToolStripControlHostを作成してCheckBoxをラップ
@@ -262,6 +262,7 @@ namespace lowpoly_mask_builder
                     selectedVertex = nearestVertex;
                     isDragging = true;
                     vScrollBarZ.Value = vScrollBarZ.Maximum - selectedVertex.Z;
+                    numericUpDownZ.Value = selectedVertex.Z;
                     isAddingTriangle = false;
                     UpdateStatusLabel(); // 座標を表示
                 }
@@ -274,6 +275,7 @@ namespace lowpoly_mask_builder
                     selectedVertex = null;
                     isDragging = false;
                     vScrollBarZ.Value = vScrollBarZ.Maximum;
+                    numericUpDownZ.Value = 0;
                     UpdateStatusLabel(); // 選択解除時に表示を更新
                 }
                 pictureBoxRight.Invalidate();
@@ -462,13 +464,13 @@ namespace lowpoly_mask_builder
                     if (existingVertex != null)
                     {
                         int existingVertexIndex = vertices.IndexOf(existingVertex);
-                        triangles.Add(new Triangle(activeEdge.VertexIndex1, activeEdge.VertexIndex2, existingVertexIndex));
+                        triangles.Add(new Triangle(activeEdge.VertexIndex2, activeEdge.VertexIndex1, existingVertexIndex));
                     }
                     else
                     {
                         int newVertexIndex = vertices.Count;
                         vertices.Add(new Vertex(newX, newY));
-                        triangles.Add(new Triangle(activeEdge.VertexIndex1, activeEdge.VertexIndex2, newVertexIndex));
+                        triangles.Add(new Triangle(activeEdge.VertexIndex2, activeEdge.VertexIndex1, newVertexIndex));
                     }
                 }
             }
@@ -825,18 +827,6 @@ namespace lowpoly_mask_builder
 
                 if (saveDialog.ShowDialog() == DialogResult.OK)
                 {
-                    if (File.Exists(saveDialog.FileName))
-                    {
-                        DialogResult result = MessageBox.Show(
-                            "指定されたファイルは既に存在します。上書きしますか？",
-                            "上書きの確認",
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Question);
-
-                        if (result != DialogResult.Yes)
-                            return;
-                    }
-
                     try
                     {
                         SaveFile(saveDialog.FileName);
@@ -1123,8 +1113,6 @@ namespace lowpoly_mask_builder
                     try
                     {
                         ExportToBinaryStl(saveDialog.FileName);
-                        MessageBox.Show("STLファイルのエクスポートが完了しました。", "エクスポート完了",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     catch (Exception ex)
                     {
@@ -1177,9 +1165,9 @@ namespace lowpoly_mask_builder
             {
                 // 左側の三角形を作成。頂点インデックスに右側の頂点数分のオフセットを追加
                 leftTriangles.Add(new Triangle(
-                    rightVertexCount + rightTriangle.V1,
+                    rightVertexCount + rightTriangle.V3,
                     rightVertexCount + rightTriangle.V2,
-                    rightVertexCount + rightTriangle.V3
+                    rightVertexCount + rightTriangle.V1
                 ));
             }
 
