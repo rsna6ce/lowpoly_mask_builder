@@ -692,6 +692,16 @@ namespace lowpoly_mask_builder
                 VertexIndex2 = v2;
             }
         }
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 
     public class Vertex
