@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using System.IO;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
+using System.Numerics;
 
 namespace lowpoly_mask_builder
 {
@@ -29,6 +30,7 @@ namespace lowpoly_mask_builder
         private const int WORLD_HEIGHT = 300;
         private const int POINT_RADIUS = 4;
         private const int EDGE_ACTIVE_DISTANCE = 8;
+        private const int THICKNESS_MM = 2;
 
         public Form1()
         {
@@ -1367,6 +1369,269 @@ namespace lowpoly_mask_builder
             } else
             {
                 this.TransparencyKey = Color.Empty;
+            }
+        }
+
+        private void export2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (SaveFileDialog saveDialog = new SaveFileDialog())
+            {
+                saveDialog.Filter = "STLファイル (*.stl)|*.stl|すべてのファイル (*.*)|*.*";
+                saveDialog.Title = "ボリュームSTLとしてエクスポート";
+
+                string defaultFileName = GetDefaultFileName();
+                string stlFileName = Path.ChangeExtension(defaultFileName, "_volume.stl");
+                saveDialog.FileName = stlFileName;
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        ExportVolumeWithMirror(saveDialog.FileName);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"エクスポート中にエラーが発生しました。\n{ex.Message}",
+                            "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void ExportVolumeWithMirror(string fileName)
+        {
+            // 1) 有効頂点抽出（元と同様）
+            List<Vertex> validVerticesRaw = vertices.Where(v => v.X != -1 && v.Y != -1).ToList();
+
+            // 2) 完全一致頂点をマージ（Index マップを得る）
+            //    Standalone と同等の挙動にするために完全一致マージを行う
+            var (mergedVerts, indexMap) = MergeDuplicateVertices(validVerticesRaw);
+
+            // 3) base (右側) 三角形を構築（インデックスを remap）
+            List<Triangle> rightTriangles = new List<Triangle>();
+            foreach (var tri in triangles)
+            {
+                // vertices[tri.V1] などは元の vertices リストの参照なので、validVerticesRaw 内の位置を使う必要がある
+                // ただし元のコードでは vertexRemap[vertices[triangle.V1]] を使っていたので、ここも同様に処理するため
+                // まず original vertices 配列中の tri.V* が有効な頂点であるかチェックします
+                Vertex va = vertices[tri.V1];
+                Vertex vb = vertices[tri.V2];
+                Vertex vc = vertices[tri.V3];
+
+                // 各頂点が validVerticesRaw の何番目かを探す -> but we have indexMap keyed by original validVerticesRaw index.
+                // To be robust, build reverse map: Vertex instance -> index in validVerticesRaw
+            }
+
+            // To simplify (and safe): build map from Vertex instance (reference) to index in validVerticesRaw
+            Dictionary<Vertex, int> refIndex = new Dictionary<Vertex, int>();
+            for (int i = 0; i < validVerticesRaw.Count; i++) refIndex[validVerticesRaw[i]] = i;
+
+            // Now build rightTriangles using remapped indices into mergedVerts
+            for (int i = 0; i < triangles.Count; i++)
+            {
+                var tri = triangles[i];
+                if (!refIndex.ContainsKey(vertices[tri.V1]) ||
+                    !refIndex.ContainsKey(vertices[tri.V2]) ||
+                    !refIndex.ContainsKey(vertices[tri.V3]))
+                    continue;
+
+                int idxA = refIndex[vertices[tri.V1]];
+                int idxB = refIndex[vertices[tri.V2]];
+                int idxC = refIndex[vertices[tri.V3]];
+
+                // map through indexMap (merged index)
+                int mA = indexMap[idxA];
+                int mB = indexMap[idxB];
+                int mC = indexMap[idxC];
+
+                // Add triangle using merged vertex indices
+                rightTriangles.Add(new Triangle(mA, mB, mC));
+            }
+
+            int n = mergedVerts.Count;
+            float thickness = THICKNESS_MM;
+
+            // 4) 裏面頂点を作る（まずコピー）
+            List<Vertex> backVertices = new List<Vertex>(n);
+            for (int i = 0; i < n; i++)
+            {
+                var v = mergedVerts[i];
+                backVertices.Add(new Vertex(v.X, v.Y, v.Z));
+            }
+
+            // 5) 面法線→頂点平均を計算
+            Vector3[] accum = new Vector3[n];
+            int[] counts = new int[n];
+
+            foreach (var t in rightTriangles)
+            {
+                var a = mergedVerts[t.V1];
+                var b = mergedVerts[t.V2];
+                var c = mergedVerts[t.V3];
+
+                Vector3 p1 = new Vector3(a.X, a.Y, a.Z);
+                Vector3 p2 = new Vector3(b.X, b.Y, b.Z);
+                Vector3 p3 = new Vector3(c.X, c.Y, c.Z);
+
+                Vector3 faceNormal = Vector3.Cross(p2 - p1, p3 - p1);
+                float len = faceNormal.Length();
+                if (len > 1e-8f) faceNormal = Vector3.Normalize(faceNormal);
+                else faceNormal = new Vector3(0, 0, 1);
+
+                // accumulate face normals
+                accum[t.V1] += faceNormal;
+                accum[t.V2] += faceNormal;
+                accum[t.V3] += faceNormal;
+
+                counts[t.V1]++; counts[t.V2]++; counts[t.V3]++;
+            }
+
+            // 6) 押し出し（Standalone と同じく **逆方向に押し出す**：-normal * thickness）
+            for (int i = 0; i < n; i++)
+            {
+                if (counts[i] == 0) continue;
+                Vector3 avg = accum[i] / counts[i];
+                if (avg.Length() <= 1e-8f) avg = new Vector3(0, 0, 1);
+
+                Vector3 dir = Vector3.Normalize(avg);
+                Vector3 offset = dir * (-thickness); // <<--- **符号が負：法線の逆方向**（Standalone と整合）
+
+                // float -> int で丸め（既存 Vertex が int のままなので丸める）
+                backVertices[i].X = (int)Math.Round(mergedVerts[i].X + offset.X);
+                backVertices[i].Y = (int)Math.Round(mergedVerts[i].Y + offset.Y);
+                backVertices[i].Z = (int)Math.Round(mergedVerts[i].Z + offset.Z);
+            }
+
+            // 7) 裏面三角形（表を逆順にして追加）
+            List<Triangle> backTriangles = new List<Triangle>();
+            for (int i = 0; i < rightTriangles.Count; i++)
+            {
+                var t = rightTriangles[i];
+                backTriangles.Add(new Triangle(t.V3 + n, t.V2 + n, t.V1 + n)); // reverse winding
+            }
+
+            // 8) 境界エッジのみを側面で閉じる（エッジカウントで判定）
+            var edgeCount = new Dictionary<(int, int), int>();
+            foreach (var t in rightTriangles)
+            {
+                AddEdgeCount(edgeCount, t.V1, t.V2);
+                AddEdgeCount(edgeCount, t.V2, t.V3);
+                AddEdgeCount(edgeCount, t.V3, t.V1);
+            }
+
+            List<Triangle> sideTriangles = new List<Triangle>();
+            foreach (var kv in edgeCount)
+            {
+                if (kv.Value != 1) continue; // 境界でないエッジは無視
+
+                int a = kv.Key.Item1;
+                int b = kv.Key.Item2;
+
+                int a2 = a + n;
+                int b2 = b + n;
+
+                // side: two triangles (winding such that normal points outward)
+                sideTriangles.Add(new Triangle(a, b, b2));
+                sideTriangles.Add(new Triangle(a, b2, a2));
+            }
+
+            // 9) 元頂点群（mergedVerts + backVertices）をまとめる
+            List<Vertex> origAllVerts = new List<Vertex>();
+            origAllVerts.AddRange(mergedVerts);
+            origAllVerts.AddRange(backVertices);
+            int origCount = origAllVerts.Count;
+
+            // 10) ミラー（X反転）を作る
+            List<Vertex> mirrorVerts = new List<Vertex>(origCount);
+            for (int i = 0; i < origCount; i++)
+            {
+                var v = origAllVerts[i];
+                mirrorVerts.Add(new Vertex(-v.X, v.Y, v.Z));
+            }
+
+            // 11) ミラー側三角形を作る（インデックスをオフセット）
+            List<Triangle> allOrigTriangles = new List<Triangle>();
+            allOrigTriangles.AddRange(rightTriangles);
+            allOrigTriangles.AddRange(backTriangles);
+            allOrigTriangles.AddRange(sideTriangles);
+
+            List<Triangle> mirrorTriangles = new List<Triangle>();
+            int mirrorOffset = origCount;
+            foreach (var t in allOrigTriangles)
+            {
+                // reverse winding for mirror copy (keep consistent outward normals)
+                mirrorTriangles.Add(new Triangle(mirrorOffset + t.V3, mirrorOffset + t.V2, mirrorOffset + t.V1));
+            }
+
+            // 12) 最終頂点/三角形集合を作成して書き出す
+            List<Vertex> finalVerts = new List<Vertex>();
+            finalVerts.AddRange(origAllVerts);
+            finalVerts.AddRange(mirrorVerts);
+
+            List<Triangle> finalTris = new List<Triangle>();
+            finalTris.AddRange(allOrigTriangles);
+            finalTris.AddRange(mirrorTriangles);
+
+            // 13) 出力（既存 SaveBinaryStl 互換）
+            SaveBinaryStl(fileName, finalVerts, finalTris);
+        }
+
+        // エッジ重複排除用
+        private void AddEdgeCount(Dictionary<(int, int), int> dict, int a, int b)
+        {
+            var key = a < b ? (a, b) : (b, a);
+            if (!dict.ContainsKey(key)) dict[key] = 0;
+            dict[key]++;
+        }
+
+        // 完全一致頂点のマージ（戻り値：merged vertex list, indexMap: 元 validVerticesRaw index -> merged index）
+        private (List<Vertex> merged, int[] indexMap) MergeDuplicateVertices(List<Vertex> validRaw)
+        {
+            var map = new Dictionary<string, int>();
+            var merged = new List<Vertex>();
+            int[] indexMap = new int[validRaw.Count];
+            for (int i = 0; i < validRaw.Count; i++)
+            {
+                var v = validRaw[i];
+                string key = $"{v.X}_{v.Y}_{v.Z}";
+                if (!map.TryGetValue(key, out int idx))
+                {
+                    idx = merged.Count;
+                    map[key] = idx;
+                    merged.Add(new Vertex(v.X, v.Y, v.Z));
+                }
+                indexMap[i] = idx;
+            }
+            return (merged, indexMap);
+        }
+
+        private void SaveBinaryStl(string fileName, List<Vertex> verts, List<Triangle> tris)
+        {
+            using (FileStream stream = new FileStream(fileName, FileMode.Create))
+            using (BinaryWriter writer = new BinaryWriter(stream))
+            {
+                byte[] header = new byte[80];
+                writer.Write(header);
+
+                writer.Write(tris.Count);
+
+                foreach (var t in tris)
+                {
+                    var v1 = verts[t.V1];
+                    var v2 = verts[t.V2];
+                    var v3 = verts[t.V3];
+
+                    float nx, ny, nz;
+                    CalculateNormal(v1, v2, v3, out nx, out ny, out nz);
+
+                    writer.Write(nx); writer.Write(ny); writer.Write(nz);
+
+                    writer.Write((float)v1.X); writer.Write((float)v1.Y); writer.Write((float)v1.Z);
+                    writer.Write((float)v2.X); writer.Write((float)v2.Y); writer.Write((float)v2.Z);
+                    writer.Write((float)v3.X); writer.Write((float)v3.Y); writer.Write((float)v3.Z);
+
+                    writer.Write((ushort)0);
+                }
             }
         }
     }

@@ -45,6 +45,8 @@ namespace lowpoly_mask_builder
             this.buttonPreview = new System.Windows.Forms.Button();
             this.optionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.transparentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.surfaceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.export2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeft)).BeginInit();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRight)).BeginInit();
@@ -78,7 +80,8 @@ namespace lowpoly_mask_builder
             this.newToolStripMenuItem,
             this.openToolStripMenuItem,
             this.saveAsToolStripMenuItem,
-            this.exportToolStripMenuItem});
+            this.exportToolStripMenuItem,
+            this.export2ToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "File";
@@ -86,21 +89,21 @@ namespace lowpoly_mask_builder
             // newToolStripMenuItem
             // 
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.newToolStripMenuItem.Text = "New";
             this.newToolStripMenuItem.Click += new System.EventHandler(this.newToolStripMenuItem_Click);
             // 
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // saveAsToolStripMenuItem
             // 
             this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.saveAsToolStripMenuItem.Text = "Save as";
             this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
             // 
@@ -108,7 +111,7 @@ namespace lowpoly_mask_builder
             // 
             this.exportToolStripMenuItem.Name = "exportToolStripMenuItem";
             this.exportToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.exportToolStripMenuItem.Text = "Export";
+            this.exportToolStripMenuItem.Text = "Export Surface STL";
             this.exportToolStripMenuItem.Click += new System.EventHandler(this.exportToolStripMenuItem_Click);
             // 
             // pictureBoxRight
@@ -172,7 +175,8 @@ namespace lowpoly_mask_builder
             // optionToolStripMenuItem
             // 
             this.optionToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.transparentToolStripMenuItem});
+            this.transparentToolStripMenuItem,
+            this.surfaceToolStripMenuItem});
             this.optionToolStripMenuItem.Name = "optionToolStripMenuItem";
             this.optionToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
             this.optionToolStripMenuItem.Text = "Option";
@@ -183,6 +187,19 @@ namespace lowpoly_mask_builder
             this.transparentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.transparentToolStripMenuItem.Text = "Transparent";
             this.transparentToolStripMenuItem.Click += new System.EventHandler(this.transparentToolStripMenuItem_Click);
+            // 
+            // surfaceToolStripMenuItem
+            // 
+            this.surfaceToolStripMenuItem.Name = "surfaceToolStripMenuItem";
+            this.surfaceToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.surfaceToolStripMenuItem.Text = "Surface";
+            // 
+            // export2ToolStripMenuItem
+            // 
+            this.export2ToolStripMenuItem.Name = "export2ToolStripMenuItem";
+            this.export2ToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.export2ToolStripMenuItem.Text = "Export Volume STL";
+            this.export2ToolStripMenuItem.Click += new System.EventHandler(this.export2ToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -230,6 +247,8 @@ namespace lowpoly_mask_builder
         private System.Windows.Forms.Button buttonPreview;
         private System.Windows.Forms.ToolStripMenuItem optionToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem transparentToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem export2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem surfaceToolStripMenuItem;
     }
 }
 
