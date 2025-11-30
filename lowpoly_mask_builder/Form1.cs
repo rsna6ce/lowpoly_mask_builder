@@ -1634,6 +1634,127 @@ namespace lowpoly_mask_builder
                 }
             }
         }
+
+        private void unifyTriangleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (triangles.Count == 0)
+            {
+                MessageBox.Show("There are no triangles.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            HashSet<Triangle> processedTriangles = new HashSet<Triangle>();
+            Queue<Triangle> triangleQueue = new Queue<Triangle>();
+
+            // 基準となる三角形をキューに追加
+            triangleQueue.Enqueue(triangles[0]);
+            processedTriangles.Add(triangles[0]);
+
+            int flippedCount = 0;
+
+            while (triangleQueue.Count > 0)
+            {
+                Triangle currentTriangle = triangleQueue.Dequeue();
+
+                foreach (var adjacentTriangle in triangles)
+                {
+                    if (processedTriangles.Contains(adjacentTriangle))
+                        continue;
+
+                    if (HasSharedEdge(currentTriangle, adjacentTriangle))
+                    {
+                        // 法線を使って向きが一致しているかを判定
+                        if (!AreTriangleNormalsConsistent(currentTriangle, adjacentTriangle))
+                        {
+                            FlipTriangle(adjacentTriangle);
+                            flippedCount++;
+                        }
+
+                        processedTriangles.Add(adjacentTriangle);
+                        triangleQueue.Enqueue(adjacentTriangle);
+                    }
+                }
+            }
+
+            pictureBoxRight.Invalidate();
+            DrawMirrorImage();
+
+            MessageBox.Show($"Triangle orientations have been unified.\nNumber of flipped triangles: {flippedCount}",
+                            "Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        // 二つの三角形が共有する辺を持つかどうかを判定（簡略化）
+        private bool HasSharedEdge(Triangle triangle1, Triangle triangle2)
+        {
+            var edges1 = new[] { (triangle1.V1, triangle1.V2), (triangle1.V2, triangle1.V3), (triangle1.V3, triangle1.V1) };
+
+            foreach (var edge1 in edges1)
+            {
+                // 同じ頂点ペアを持つかチェック（順序は問わない）
+                if ((triangle2.V1 == edge1.Item1 && triangle2.V2 == edge1.Item2) ||
+                    (triangle2.V1 == edge1.Item2 && triangle2.V2 == edge1.Item1) ||
+                    (triangle2.V2 == edge1.Item1 && triangle2.V3 == edge1.Item2) ||
+                    (triangle2.V2 == edge1.Item2 && triangle2.V3 == edge1.Item1) ||
+                    (triangle2.V3 == edge1.Item1 && triangle2.V1 == edge1.Item2) ||
+                    (triangle2.V3 == edge1.Item2 && triangle2.V1 == edge1.Item1))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // 二つの三角形の法線が同じ方向を向いているかを判定
+        private bool AreTriangleNormalsConsistent(Triangle triangle1, Triangle triangle2)
+        {
+            float nx1, ny1, nz1;
+            float nx2, ny2, nz2;
+
+            CalculateNormal(vertices[triangle1.V1], vertices[triangle1.V2], vertices[triangle1.V3], out nx1, out ny1, out nz1);
+            CalculateNormal(vertices[triangle2.V1], vertices[triangle2.V2], vertices[triangle2.V3], out nx2, out ny2, out nz2);
+
+            // 法線の方向が同じ方向を向いているか（内積が正であるか）を確認
+            float dotProduct = nx1 * nx2 + ny1 * ny2 + nz1 * nz2;
+
+            // 内積が正であれば、同じ方向を向いている
+            return dotProduct > 0.0f;
+        }
+
+        // 三角形の頂点順序を反転させる
+        private void FlipTriangle(Triangle triangle)
+        {
+            int temp = triangle.V1;
+            triangle.V1 = triangle.V3;
+            triangle.V3 = temp;
+        }
+
+        private void flipAllTriangleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (triangles.Count == 0)
+            {
+                MessageBox.Show("There are no triangles.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            int flippedCount = 0;
+
+            // すべての三角形の頂点順序を反転させる
+            foreach (var triangle in triangles)
+            {
+                // 頂点のインデックスを反転させる（V1, V2, V3 → V3, V2, V1）
+                int temp = triangle.V1;
+                triangle.V1 = triangle.V3;
+                triangle.V3 = temp;
+                flippedCount++;
+            }
+
+            // 画面を更新
+            pictureBoxRight.Invalidate();
+            DrawMirrorImage();
+
+            MessageBox.Show($"All triangles have been flipped.\nNumber of flipped triangles: {flippedCount}",
+                            "Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
     }
 
     public class Vertex

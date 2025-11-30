@@ -47,6 +47,8 @@ namespace lowpoly_mask_builder
             this.transparentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.surfaceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.export2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.unifyTriangleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.flipAllTriangleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeft)).BeginInit();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRight)).BeginInit();
@@ -176,7 +178,9 @@ namespace lowpoly_mask_builder
             // 
             this.optionToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.transparentToolStripMenuItem,
-            this.surfaceToolStripMenuItem});
+            this.surfaceToolStripMenuItem,
+            this.unifyTriangleToolStripMenuItem,
+            this.flipAllTriangleToolStripMenuItem});
             this.optionToolStripMenuItem.Name = "optionToolStripMenuItem";
             this.optionToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
             this.optionToolStripMenuItem.Text = "Option";
@@ -200,6 +204,20 @@ namespace lowpoly_mask_builder
             this.export2ToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.export2ToolStripMenuItem.Text = "Export Volume STL";
             this.export2ToolStripMenuItem.Click += new System.EventHandler(this.export2ToolStripMenuItem_Click);
+            // 
+            // unifyTriangleToolStripMenuItem
+            // 
+            this.unifyTriangleToolStripMenuItem.Name = "unifyTriangleToolStripMenuItem";
+            this.unifyTriangleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.unifyTriangleToolStripMenuItem.Text = "Unify triangle";
+            this.unifyTriangleToolStripMenuItem.Click += new System.EventHandler(this.unifyTriangleToolStripMenuItem_Click);
+            // 
+            // flipAllTriangleToolStripMenuItem
+            // 
+            this.flipAllTriangleToolStripMenuItem.Name = "flipAllTriangleToolStripMenuItem";
+            this.flipAllTriangleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.flipAllTriangleToolStripMenuItem.Text = "Flip all triangle";
+            this.flipAllTriangleToolStripMenuItem.Click += new System.EventHandler(this.flipAllTriangleToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -249,6 +267,8 @@ namespace lowpoly_mask_builder
         private System.Windows.Forms.ToolStripMenuItem transparentToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem export2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem surfaceToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem unifyTriangleToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem flipAllTriangleToolStripMenuItem;
     }
 }
 
