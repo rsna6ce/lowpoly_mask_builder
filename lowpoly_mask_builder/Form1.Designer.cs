@@ -39,9 +39,14 @@ namespace lowpoly_mask_builder
             this.pictureBoxRight = new System.Windows.Forms.PictureBox();
             this.vScrollBarZ = new System.Windows.Forms.VScrollBar();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.statusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.numericUpDownZ = new System.Windows.Forms.NumericUpDown();
+            this.buttonPreview = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeft)).BeginInit();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRight)).BeginInit();
+            this.statusStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownZ)).BeginInit();
             this.SuspendLayout();
             // 
             // pictureBoxLeft
@@ -59,7 +64,7 @@ namespace lowpoly_mask_builder
             this.fileToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1241, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1252, 24);
             this.menuStrip1.TabIndex = 1;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -77,28 +82,28 @@ namespace lowpoly_mask_builder
             // newToolStripMenuItem
             // 
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
             this.newToolStripMenuItem.Text = "New";
             this.newToolStripMenuItem.Click += new System.EventHandler(this.newToolStripMenuItem_Click);
             // 
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // saveAsToolStripMenuItem
             // 
             this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
             this.saveAsToolStripMenuItem.Text = "Save as";
             this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
             // 
             // exportToolStripMenuItem
             // 
             this.exportToolStripMenuItem.Name = "exportToolStripMenuItem";
-            this.exportToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.exportToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
             this.exportToolStripMenuItem.Text = "Export";
             // 
             // pictureBoxRight
@@ -116,25 +121,54 @@ namespace lowpoly_mask_builder
             // 
             // vScrollBarZ
             // 
+            this.vScrollBarZ.LargeChange = 1;
             this.vScrollBarZ.Location = new System.Drawing.Point(1212, 28);
             this.vScrollBarZ.Name = "vScrollBarZ";
-            this.vScrollBarZ.Size = new System.Drawing.Size(20, 900);
+            this.vScrollBarZ.Size = new System.Drawing.Size(32, 864);
             this.vScrollBarZ.TabIndex = 2;
             this.vScrollBarZ.Scroll += new System.Windows.Forms.ScrollEventHandler(this.vScrollBarZ_Scroll);
             // 
             // statusStrip1
             // 
+            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.statusLabel1});
             this.statusStrip1.Location = new System.Drawing.Point(0, 936);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(1241, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(1252, 22);
             this.statusStrip1.TabIndex = 3;
             this.statusStrip1.Text = "statusStrip1";
+            // 
+            // statusLabel1
+            // 
+            this.statusLabel1.Name = "statusLabel1";
+            this.statusLabel1.Size = new System.Drawing.Size(118, 17);
+            this.statusLabel1.Text = "toolStripStatusLabel1";
+            // 
+            // numericUpDownZ
+            // 
+            this.numericUpDownZ.Location = new System.Drawing.Point(1208, 900);
+            this.numericUpDownZ.Name = "numericUpDownZ";
+            this.numericUpDownZ.Size = new System.Drawing.Size(40, 19);
+            this.numericUpDownZ.TabIndex = 4;
+            this.numericUpDownZ.ValueChanged += new System.EventHandler(this.numericUpDownZ_ValueChanged);
+            // 
+            // buttonPreview
+            // 
+            this.buttonPreview.Location = new System.Drawing.Point(24, 40);
+            this.buttonPreview.Name = "buttonPreview";
+            this.buttonPreview.Size = new System.Drawing.Size(56, 40);
+            this.buttonPreview.TabIndex = 5;
+            this.buttonPreview.Text = "button1";
+            this.buttonPreview.UseVisualStyleBackColor = true;
+            this.buttonPreview.Click += new System.EventHandler(this.buttonPreview_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1241, 958);
+            this.ClientSize = new System.Drawing.Size(1252, 958);
+            this.Controls.Add(this.buttonPreview);
+            this.Controls.Add(this.numericUpDownZ);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.vScrollBarZ);
             this.Controls.Add(this.pictureBoxRight);
@@ -148,6 +182,9 @@ namespace lowpoly_mask_builder
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRight)).EndInit();
+            this.statusStrip1.ResumeLayout(false);
+            this.statusStrip1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownZ)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -165,6 +202,9 @@ namespace lowpoly_mask_builder
         private System.Windows.Forms.PictureBox pictureBoxRight;
         private System.Windows.Forms.VScrollBar vScrollBarZ;
         private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.ToolStripStatusLabel statusLabel1;
+        private System.Windows.Forms.NumericUpDown numericUpDownZ;
+        private System.Windows.Forms.Button buttonPreview;
     }
 }
 

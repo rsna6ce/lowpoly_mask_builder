@@ -235,11 +235,11 @@ namespace lowpoly_mask_builder
                 Vertex nearestVertex = FindNearestVertex(e.Location, 10);
                 if (nearestVertex != null)
                 {
-                    // 異なる頂点が選択された場合、その頂点を新たに選択
                     selectedVertex = nearestVertex;
                     isDragging = true;
-                    vScrollBarZ.Value = vScrollBarZ.Maximum - selectedVertex.Z; // Z座標に対応した位置に設定
+                    vScrollBarZ.Value = vScrollBarZ.Maximum - selectedVertex.Z;
                     isAddingTriangle = false;
+                    UpdateStatusLabel(); // 座標を表示
                 }
                 else if (activeEdge != null)
                 {
@@ -247,10 +247,10 @@ namespace lowpoly_mask_builder
                 }
                 else
                 {
-                    // すでに選択されている頂点が再度クリックされた場合、選択を解除
                     selectedVertex = null;
                     isDragging = false;
-                    vScrollBarZ.Value = vScrollBarZ.Maximum; // スライダーを最上部に設定
+                    vScrollBarZ.Value = vScrollBarZ.Maximum;
+                    UpdateStatusLabel(); // 選択解除時に表示を更新
                 }
                 pictureBoxRight.Invalidate();
             }
@@ -269,17 +269,32 @@ namespace lowpoly_mask_builder
 
                 selectedVertex.X = newX;
                 selectedVertex.Y = newY;
+
+                UpdateStatusLabel(); // 座標を更新して表示
+
                 pictureBoxRight.Invalidate();
             }
             else if (!isAddingTriangle)
             {
-                Edge nearestEdge = FindNearestEdgeMiddle(e.Location, EDGE_ACTIVE_DISTANCE  * Math.Max(pictureBoxRight.Size.Width / WORLD_WIDTH, pictureBoxRight.Size.Height / WORLD_HEIGHT));
+                Edge nearestEdge = FindNearestEdgeMiddle(e.Location, EDGE_ACTIVE_DISTANCE * Math.Max(pictureBoxRight.Size.Width / WORLD_WIDTH, pictureBoxRight.Size.Height / WORLD_HEIGHT));
                 if (nearestEdge != activeEdge)
                 {
                     activeEdge = nearestEdge;
                 }
             }
             pictureBoxRight.Invalidate();
+        }
+
+        private void UpdateStatusLabel()
+        {
+            if (selectedVertex != null)
+            {
+                statusLabel1.Text = $"vertex : (x:{selectedVertex.X}, y:{selectedVertex.Y}, z:{selectedVertex.Z})";
+            }
+            else
+            {
+                statusLabel1.Text = "vertex : ";
+            }
         }
 
         private void pictureBoxRight_MouseUp(object sender, MouseEventArgs e)
@@ -300,6 +315,10 @@ namespace lowpoly_mask_builder
             activeEdge = null;
             isAddingTriangle = false;
             isDragging = false;
+
+            // 必要に応じて座標表示を更新（選択状態が変化した場合）
+            UpdateStatusLabel();
+
             pictureBoxRight.Invalidate();
         }
 
@@ -680,6 +699,13 @@ namespace lowpoly_mask_builder
             {
                 selectedVertex.Z = vScrollBarZ.Maximum - vScrollBarZ.Value;
                 DrawMirrorImage();
+                UpdateStatusLabel();  // ステータスラベルを更新
+
+                // NumericUpDownの値も同期
+                if ((int)numericUpDownZ.Value != selectedVertex.Z)
+                {
+                    numericUpDownZ.Value = selectedVertex.Z;
+                }
             }
         }
 
@@ -825,6 +851,30 @@ namespace lowpoly_mask_builder
                 }
                 counter++;
             }
+        }
+
+        private void numericUpDownZ_ValueChanged(object sender, EventArgs e)
+        {
+            if (selectedVertex != null)
+            {
+                int newZValue = (int)numericUpDownZ.Value;
+                if (selectedVertex.Z != newZValue)
+                {
+                    selectedVertex.Z = newZValue;
+                    // スクロールバーの位置も同期
+                    if (vScrollBarZ.Value != vScrollBarZ.Maximum - newZValue)
+                    {
+                        vScrollBarZ.Value = vScrollBarZ.Maximum - newZValue;
+                    }
+                    DrawMirrorImage();
+                    UpdateStatusLabel();  // ステータスラベルを更新
+                }
+            }
+        }
+
+        private void buttonPreview_Click(object sender, EventArgs e)
+        {
+
         }
     }
 
