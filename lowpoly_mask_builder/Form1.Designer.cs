@@ -141,8 +141,8 @@ namespace lowpoly_mask_builder
             // statusLabel1
             // 
             this.statusLabel1.Name = "statusLabel1";
-            this.statusLabel1.Size = new System.Drawing.Size(118, 17);
-            this.statusLabel1.Text = "toolStripStatusLabel1";
+            this.statusLabel1.Size = new System.Drawing.Size(22, 17);
+            this.statusLabel1.Text = "     ";
             // 
             // numericUpDownZ
             // 
@@ -156,10 +156,11 @@ namespace lowpoly_mask_builder
             // 
             this.buttonPreview.Location = new System.Drawing.Point(24, 40);
             this.buttonPreview.Name = "buttonPreview";
-            this.buttonPreview.Size = new System.Drawing.Size(56, 40);
+            this.buttonPreview.Size = new System.Drawing.Size(108, 40);
             this.buttonPreview.TabIndex = 5;
-            this.buttonPreview.Text = "button1";
+            this.buttonPreview.Text = "preveiw debug";
             this.buttonPreview.UseVisualStyleBackColor = true;
+            this.buttonPreview.Visible = false;
             this.buttonPreview.Click += new System.EventHandler(this.buttonPreview_Click);
             // 
             // Form1

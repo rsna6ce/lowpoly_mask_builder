@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Windows.Forms;
 using System.IO;
 using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 namespace lowpoly_mask_builder
 {
@@ -874,7 +876,136 @@ namespace lowpoly_mask_builder
 
         private void buttonPreview_Click(object sender, EventArgs e)
         {
+            if (pictureBoxLeft == null) return;
 
+            int width = pictureBoxLeft.Width;
+            int height = pictureBoxLeft.Height;
+
+            Bitmap heightMap = new Bitmap(width, height);
+
+            BitmapData bitmapData = heightMap.LockBits(
+                new Rectangle(0, 0, width, height),
+                ImageLockMode.WriteOnly,
+                PixelFormat.Format24bppRgb);
+
+            try
+            {
+                unsafe
+                {
+                    Parallel.For(0, height, y =>
+                    {
+                        byte* basePtr = (byte*)bitmapData.Scan0 + y * bitmapData.Stride;
+
+                        for (int x = 0; x < width; x++)
+                        {
+                            // pictureBoxLeftは鏡像なので、画面座標からワールド座標への変換時にX座標を反転
+                            int mirroredScreenX = width - x;  // ローカル変数を使用
+                            Vertex worldPoint = ScreenToWorld(new Point(mirroredScreenX, y));
+
+                            // この点がどの三角形に含まれるかを調べる
+                            float interpolatedZ = 0.0f;
+                            bool insideAnyTriangle = false;
+
+                            foreach (var triangle in triangles)
+                            {
+                                if (IsPointInTriangle(worldPoint, triangle))
+                                {
+                                    interpolatedZ = InterpolateZInTriangle(worldPoint, triangle);
+                                    insideAnyTriangle = true;
+                                    break;
+                                }
+                            }
+
+                            // 輝度を計算
+                            int grayValue;
+                            if (insideAnyTriangle)
+                            {
+                                grayValue = (int)((interpolatedZ / 100.0f) * 255.0f);
+                                grayValue = Math.Max(0, Math.Min(255, grayValue));
+                            }
+                            else
+                            {
+                                grayValue = 0;
+                            }
+
+                            // 各ピクセルに書き込み
+                            int pixelIndex = x * 3;
+                            basePtr[pixelIndex] = (byte)grayValue;     // Blue
+                            basePtr[pixelIndex + 1] = (byte)grayValue; // Green
+                            basePtr[pixelIndex + 2] = (byte)grayValue; // Red
+                        }
+                    });
+                }
+            }
+            finally
+            {
+                heightMap.UnlockBits(bitmapData);
+            }
+
+            pictureBoxLeft.Image = heightMap;
+        }
+
+        // 指定された点が三角形内にあるかどうかを判定
+        private bool IsPointInTriangle(Vertex point, Triangle triangle)
+        {
+            Vertex v1 = vertices[triangle.V1];
+            Vertex v2 = vertices[triangle.V2];
+            Vertex v3 = vertices[triangle.V3];
+
+            // 重心座標を計算
+            float denominator = ((v2.Y - v3.Y) * (v1.X - v3.X) + (v3.X - v2.X) * (v1.Y - v3.Y));
+            if (Math.Abs(denominator) < 0.0001f) return false;
+
+            float alpha = ((v2.Y - v3.Y) * (point.X - v3.X) + (v3.X - v2.X) * (point.Y - v3.Y)) / denominator;
+            float beta = ((v3.Y - v1.Y) * (point.X - v3.X) + (v1.X - v3.X) * (point.Y - v3.Y)) / denominator;
+            float gamma = 1.0f - alpha - beta;
+
+            // 辺上も含めるために、判定条件を緩和（0以上または非常に小さな負の値も許容）
+            const float epsilon = 1e-6f;  // 微小な誤差を許容するための閾値
+            bool alphaOk = alpha >= -epsilon;
+            bool betaOk = beta >= -epsilon;
+            bool gammaOk = gamma >= -epsilon;
+
+            // 重心座標の和が1に近いことを確認
+            bool barycentricSumOk = Math.Abs(alpha + beta + gamma - 1.0f) < epsilon;
+
+            return alphaOk && betaOk && gammaOk && barycentricSumOk;
+        }
+
+        // Z値の補間関数も同様に修正
+        private float InterpolateZInTriangle(Vertex point, Triangle triangle)
+        {
+            Vertex v1 = vertices[triangle.V1];
+            Vertex v2 = vertices[triangle.V2];
+            Vertex v3 = vertices[triangle.V3];
+
+            // 三点から平面方程式 ax + by + cz = d を求める
+            float a1 = v2.X - v1.X;
+            float b1 = v2.Y - v1.Y;
+            float c1 = v2.Z - v1.Z;
+
+            float a2 = v3.X - v1.X;
+            float b2 = v3.Y - v1.Y;
+            float c2 = v3.Z - v1.Z;
+
+            // 平面の法線ベクトル (a, b, c) を求める
+            float a = b1 * c2 - b2 * c1;
+            float b = c1 * a2 - c2 * a1;
+            float c = a1 * b2 - a2 * b1;
+
+            // 平面方程式の定数項 d を求める
+            float d = -(a * v1.X + b * v1.Y + c * v1.Z);
+
+            // 指定された点 (point.X, point.Y) で平面上のZ値を求める
+            // 平面方程式：a*x + b*y + c*z + d = 0 より、z = -(a*x + b*y + d) / c
+            if (Math.Abs(c) > 1e-6f)
+            {
+                float z = -(a * point.X + b * point.Y + d) / c;
+                return z;
+            }
+
+            // cが非常に小さい場合は平面が垂直に近いため、平均値を使用
+            return (v1.Z + v2.Z + v3.Z) / 3.0f;
         }
     }
 
