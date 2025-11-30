@@ -1105,6 +1105,169 @@ namespace lowpoly_mask_builder
             // cが非常に小さい場合は平面が垂直に近いため、平均値を使用
             return (v1.Z + v2.Z + v3.Z) / 3.0f;
         }
+
+        private void exportToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (SaveFileDialog saveDialog = new SaveFileDialog())
+            {
+                saveDialog.Filter = "STLファイル (*.stl)|*.stl|すべてのファイル (*.*)|*.*";
+                saveDialog.Title = "STLファイルとしてエクスポート";
+
+                string defaultFileName = GetDefaultFileName();
+                // .lmbから.stlに拡張子を変更
+                string stlFileName = Path.ChangeExtension(defaultFileName, ".stl");
+                saveDialog.FileName = stlFileName;
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        ExportToBinaryStl(saveDialog.FileName);
+                        MessageBox.Show("STLファイルのエクスポートが完了しました。", "エクスポート完了",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"STLファイルのエクスポート中にエラーが発生しました。\n{ex.Message}",
+                            "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void ExportToBinaryStl(string fileName)
+        {
+            // 有効な頂点（マージされた無効な頂点）を抽出
+            List<Vertex> validVertices = vertices.Where(v => v.X != -1 && v.Y != -1).ToList();
+
+            // 頂点インデックスの再マッピングを作成
+            Dictionary<Vertex, int> vertexRemapping = new Dictionary<Vertex, int>();
+            for (int i = 0; i < validVertices.Count; i++)
+            {
+                vertexRemapping[validVertices[i]] = i;
+            }
+
+            // 右側の三角形をコピー（頂点インデックスを再マッピング）
+            List<Triangle> rightTriangles = new List<Triangle>();
+            foreach (var triangle in triangles)
+            {
+                if (vertexRemapping.ContainsKey(vertices[triangle.V1]) &&
+                    vertexRemapping.ContainsKey(vertices[triangle.V2]) &&
+                    vertexRemapping.ContainsKey(vertices[triangle.V3]))
+                {
+                    rightTriangles.Add(new Triangle(
+                        vertexRemapping[vertices[triangle.V1]],
+                        vertexRemapping[vertices[triangle.V2]],
+                        vertexRemapping[vertices[triangle.V3]]));
+                }
+            }
+
+            // 左側の頂点を生成（X座標のみを負に変換）
+            List<Vertex> leftVertices = new List<Vertex>();
+            foreach (var vertex in validVertices)
+            {
+                // X座標を負に変換して左側の頂点を追加
+                leftVertices.Add(new Vertex(-vertex.X, vertex.Y, vertex.Z));
+            }
+
+            // 左側の三角形を生成（頂点インデックスに右側の頂点数分のオフセットを追加）
+            List<Triangle> leftTriangles = new List<Triangle>();
+            int rightVertexCount = validVertices.Count; // 右側の頂点数
+            foreach (var rightTriangle in rightTriangles)
+            {
+                // 左側の三角形を作成。頂点インデックスに右側の頂点数分のオフセットを追加
+                leftTriangles.Add(new Triangle(
+                    rightVertexCount + rightTriangle.V1,
+                    rightVertexCount + rightTriangle.V2,
+                    rightVertexCount + rightTriangle.V3
+                ));
+            }
+
+            // 全ての頂点と三角形を結合
+            List<Vertex> allVertices = new List<Vertex>();
+            allVertices.AddRange(validVertices);   // 右側の頂点（インデックス 0 ～ rightVertexCount-1）
+            allVertices.AddRange(leftVertices);   // 左側の頂点（インデックス rightVertexCount ～）
+
+            List<Triangle> allTriangles = new List<Triangle>();
+            allTriangles.AddRange(rightTriangles);  // 右側の三角形
+            allTriangles.AddRange(leftTriangles);  // 左側の三角形
+
+            // バイナリSTLファイルとして保存
+            using (FileStream stream = new FileStream(fileName, FileMode.Create))
+            {
+                using (BinaryWriter writer = new BinaryWriter(stream))
+                {
+                    // STLヘッダー（80バイト）
+                    string header = "Lowpoly Mask Builder";
+                    byte[] headerBytes = new byte[80];
+                    byte[] headerStringBytes = System.Text.Encoding.ASCII.GetBytes(header);
+                    Array.Copy(headerStringBytes, headerBytes, Math.Min(headerStringBytes.Length, 80));
+                    writer.Write(headerBytes);
+
+                    // 三角形の数
+                    writer.Write(allTriangles.Count);
+
+                    // 各三角形のデータを書き込み
+                    foreach (var triangle in allTriangles)
+                    {
+                        Vertex v1 = allVertices[triangle.V1];
+                        Vertex v2 = allVertices[triangle.V2];
+                        Vertex v3 = allVertices[triangle.V3];
+
+                        // 法線ベクトルを計算
+                        float nx, ny, nz;
+                        CalculateNormal(v1, v2, v3, out nx, out ny, out nz);
+
+                        // 法線ベクトル
+                        writer.Write((float)nx);
+                        writer.Write((float)ny);
+                        writer.Write((float)nz);
+
+                        // 各頂点の座標
+                        writer.Write((float)v1.X);
+                        writer.Write((float)v1.Y);
+                        writer.Write((float)v1.Z);
+
+                        writer.Write((float)v2.X);
+                        writer.Write((float)v2.Y);
+                        writer.Write((float)v2.Z);
+
+                        writer.Write((float)v3.X);
+                        writer.Write((float)v3.Y);
+                        writer.Write((float)v3.Z);
+
+                        // 属性バイト数（通常は0）
+                        writer.Write((ushort)0);
+                    }
+                }
+            }
+        }
+
+        private void CalculateNormal(Vertex v1, Vertex v2, Vertex v3, out float nx, out float ny, out float nz)
+        {
+            // 2つの辺ベクトルを計算
+            float edge1x = v2.X - v1.X;
+            float edge1y = v2.Y - v1.Y;
+            float edge1z = v2.Z - v1.Z;
+
+            float edge2x = v3.X - v1.X;
+            float edge2y = v3.Y - v1.Y;
+            float edge2z = v3.Z - v1.Z;
+
+            // 外積を計算して法線ベクトルを得る
+            nx = edge1y * edge2z - edge1z * edge2y;
+            ny = edge1z * edge2x - edge1x * edge2z;
+            nz = edge1x * edge2y - edge1y * edge2x;
+
+            // 正規化
+            float length = (float)Math.Sqrt(nx * nx + ny * ny + nz * nz);
+            if (length > 0.0001f)
+            {
+                nx /= length;
+                ny /= length;
+                nz /= length;
+            }
+        }
     }
 
     public class Vertex
