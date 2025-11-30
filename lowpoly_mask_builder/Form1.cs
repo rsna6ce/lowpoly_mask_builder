@@ -396,7 +396,7 @@ namespace lowpoly_mask_builder
             if (indicesToOverwrite.Count > 0)
             {
                 // 三角形の頂点インデックスをprimaryIndexに上書き
-                foreach (var triangle in triangles)
+                foreach (var triangle in triangles.ToList()) // ToList()でコピーを作成
                 {
                     if (indicesToOverwrite.Contains(triangle.V1))
                     {
@@ -412,13 +412,63 @@ namespace lowpoly_mask_builder
                     }
                 }
 
-                // indicesToOverwriteの頂点を無効な座標に設定してレンダリングされないようにする
+                // 上書き後に、同一座標を持つ退化した三角形を削除
+                RemoveDegenerateTriangles();
+
+                // indicesToOverwriteの頂点を無効な座標に設定
                 foreach (int index in indicesToOverwrite)
                 {
                     vertices[index].X = -1;
                     vertices[index].Y = -1;
                     vertices[index].Z = -1;
                 }
+            }
+        }
+
+        private void RemoveDegenerateTriangles()
+        {
+            var trianglesToRemove = new List<Triangle>();
+
+            foreach (var triangle in triangles)
+            {
+                // 三角形の3つの頂点を取得
+                Vertex v1 = vertices[triangle.V1];
+                Vertex v2 = vertices[triangle.V2];
+                Vertex v3 = vertices[triangle.V3];
+
+                // 有効な頂点かどうかを確認（マージされた無効な頂点は除外）
+                if (v1.X == -1 || v2.X == -1 || v3.X == -1)
+                {
+                    trianglesToRemove.Add(triangle);
+                    continue;
+                }
+
+                // 2つ以上の頂点が同一座標かどうかをチェック
+                bool isDegenerate = false;
+
+                if (v1.X == v2.X && v1.Y == v2.Y)
+                {
+                    isDegenerate = true;
+                }
+                else if (v2.X == v3.X && v2.Y == v3.Y)
+                {
+                    isDegenerate = true;
+                }
+                else if (v3.X == v1.X && v3.Y == v1.Y)
+                {
+                    isDegenerate = true;
+                }
+
+                if (isDegenerate)
+                {
+                    trianglesToRemove.Add(triangle);
+                }
+            }
+
+            // 退化した三角形を削除
+            foreach (var triangleToRemove in trianglesToRemove)
+            {
+                triangles.Remove(triangleToRemove);
             }
         }
 
@@ -432,47 +482,73 @@ namespace lowpoly_mask_builder
             // ActiveEdgeの両端が鏡像境界（X=0）にあるかチェック
             if (vertices[v1].X == 0 && vertices[v2].X == 0)
             {
-                // 鏡像境界上のエッジを中点で分割
                 SplitMirrorBoundaryEdge();
+                return;
+            }
+
+            var trianglesContainingEdge = triangles.Where(t =>
+                ((t.V1 == v1 && t.V2 == v2) || (t.V1 == v2 && t.V2 == v1) ||
+                 (t.V2 == v1 && t.V3 == v2) || (t.V2 == v2 && t.V3 == v1) ||
+                 (t.V3 == v1 && t.V1 == v2) || (t.V3 == v2 && t.V1 == v1))
+            ).ToList();
+
+            if (trianglesContainingEdge.Count > 1)
+            {
+                SplitTrianglesByAddingMidpoint(trianglesContainingEdge);
+                return;
+            }
+
+            // 新しい頂点の追加
+            Vertex worldPos = ScreenToWorld(mouseLocation);
+            int newX = worldPos.X / GRID_SIZE * GRID_SIZE;
+            int newY = worldPos.Y / GRID_SIZE * GRID_SIZE;
+            newX = Math.Max(0, Math.Min(WORLD_WIDTH, newX));
+            newY = Math.Max(0, Math.Min(WORLD_HEIGHT, newY));
+
+            Vertex existingVertex = vertices.FirstOrDefault(v => v.X == newX && v.Y == newY);
+            int newVertexIndex;
+
+            if (existingVertex != null)
+            {
+                newVertexIndex = vertices.IndexOf(existingVertex);
             }
             else
             {
-                // activeEdgeが所属している三角形をすべて取得
-                var trianglesContainingEdge = triangles.Where(t =>
-                    ((t.V1 == v1 && t.V2 == v2) || (t.V1 == v2 && t.V2 == v1) ||
-                     (t.V2 == v1 && t.V3 == v2) || (t.V2 == v2 && t.V3 == v1) ||
-                     (t.V3 == v1 && t.V1 == v2) || (t.V3 == v2 && t.V1 == v1))
-                ).ToList();
+                newVertexIndex = vertices.Count;
+                vertices.Add(new Vertex(newX, newY));
+            }
 
-                if (trianglesContainingEdge.Count > 1)
-                {
-                    // activeEdgeが複数の三角形に所属している場合、中点を追加して分割
-                    SplitTrianglesByAddingMidpoint(trianglesContainingEdge);
-                }
-                else
-                {
-                    // 通常の処理：新しい頂点を追加して三角形を作成
-                    Vertex worldPos = ScreenToWorld(mouseLocation);
-                    int newX = worldPos.X / GRID_SIZE * GRID_SIZE;
-                    int newY = worldPos.Y / GRID_SIZE * GRID_SIZE;
+            // activeEdgeが所属する三角形を探して、その接続順と逆順で新しい三角形を作成
+            Triangle newTriangle = CreateTriangleWithCorrectOrientation(v1, v2, newVertexIndex, trianglesContainingEdge);
 
-                    newX = Math.Max(0, Math.Min(WORLD_WIDTH, newX));
-                    newY = Math.Max(0, Math.Min(WORLD_HEIGHT, newY));
+            triangles.Add(newTriangle);
+        }
 
-                    Vertex existingVertex = vertices.FirstOrDefault(v => v.X == newX && v.Y == newY);
+        private Triangle CreateTriangleWithCorrectOrientation(int v1, int v2, int newVertexIndex, List<Triangle> trianglesContainingEdge)
+        {
+            if (trianglesContainingEdge.Count == 0)
+            {
+                // 隣接する三角形がない場合は標準の順序で作成
+                return new Triangle(v1, v2, newVertexIndex);
+            }
 
-                    if (existingVertex != null)
-                    {
-                        int existingVertexIndex = vertices.IndexOf(existingVertex);
-                        triangles.Add(new Triangle(activeEdge.VertexIndex2, activeEdge.VertexIndex1, existingVertexIndex));
-                    }
-                    else
-                    {
-                        int newVertexIndex = vertices.Count;
-                        vertices.Add(new Vertex(newX, newY));
-                        triangles.Add(new Triangle(activeEdge.VertexIndex2, activeEdge.VertexIndex1, newVertexIndex));
-                    }
-                }
+            // activeEdgeが所属する三角形の接続順を確認
+            var adjacentTriangle = trianglesContainingEdge.First();
+
+            // activeEdgeがこの三角形内でどの順序で接続されているかを確認
+            if ((adjacentTriangle.V1 == v1 && adjacentTriangle.V2 == v2) ||
+                (adjacentTriangle.V2 == v2 && adjacentTriangle.V3 == v1) ||
+                (adjacentTriangle.V3 == v1 && adjacentTriangle.V2 == v2))
+            {
+                // activeEdgeがこの三角形内で「v1→v2」の順序で接続されている場合、
+                // 新しい三角形でも同じ順序「v1→v2」を使用する
+                return new Triangle(v1, v2, newVertexIndex);
+            }
+            else
+            {
+                // activeEdgeがこの三角形内で「v2→v1」の順序で接続されている場合、
+                // 新しい三角形でも同じ順序「v2→v1」を使用する
+                return new Triangle(v2, v1, newVertexIndex);
             }
         }
 
@@ -542,18 +618,14 @@ namespace lowpoly_mask_builder
             int v1 = activeEdge.VertexIndex1;
             int v2 = activeEdge.VertexIndex2;
 
-            // activeEdgeの中点に新しい頂点を追加
+            // 中点を作成
             int midX = (vertices[v1].X + vertices[v2].X) / 2;
             int midY = (vertices[v1].Y + vertices[v2].Y) / 2;
-
-            // 中点がグリッドにスナップされるように調整
             midX = midX / GRID_SIZE * GRID_SIZE;
             midY = midY / GRID_SIZE * GRID_SIZE;
 
-            // 中点が既存の頂点と重複しないかチェック
             Vertex existingMidpoint = vertices.FirstOrDefault(v => v.X == midX && v.Y == midY);
             int midpointIndex;
-
             if (existingMidpoint != null)
             {
                 midpointIndex = vertices.IndexOf(existingMidpoint);
@@ -564,42 +636,71 @@ namespace lowpoly_mask_builder
                 vertices.Add(new Vertex(midX, midY));
             }
 
-            // 元の三角形を削除し、新しい4つの三角形に置き換える
+            // 元の三角形を削除
             var trianglesToRemove = new List<Triangle>(trianglesContainingEdge);
-
             foreach (var triangleToRemove in trianglesToRemove)
             {
                 triangles.Remove(triangleToRemove);
             }
 
-            // 各元の三角形を2つに分割して4つの新しい三角形を作成
             foreach (var originalTriangle in trianglesContainingEdge)
             {
-                // activeEdgeの反対側の頂点を取得
-                int oppositeVertex = -1;
-                if ((originalTriangle.V1 == v1 || originalTriangle.V1 == v2) &&
-                    (originalTriangle.V2 == v1 || originalTriangle.V2 == v2))
-                {
-                    oppositeVertex = originalTriangle.V3;
-                }
-                else if ((originalTriangle.V2 == v1 || originalTriangle.V2 == v2) &&
-                         (originalTriangle.V3 == v1 || originalTriangle.V3 == v2))
-                {
-                    oppositeVertex = originalTriangle.V1;
-                }
-                else if ((originalTriangle.V3 == v1 || originalTriangle.V3 == v2) &&
-                         (originalTriangle.V1 == v1 || originalTriangle.V1 == v2))
-                {
-                    oppositeVertex = originalTriangle.V2;
-                }
-
+                int oppositeVertex = GetOppositeVertex(originalTriangle, v1, v2);
                 if (oppositeVertex != -1)
                 {
-                    // 2つの新しい三角形を作成：(v1, midpoint, opposite) と (midpoint, v2, opposite)
-                    triangles.Add(new Triangle(v1, midpointIndex, oppositeVertex));
-                    triangles.Add(new Triangle(midpointIndex, v2, oppositeVertex));
+                    // この三角形内で、共有する辺がどの位置にあるかを特定
+                    int firstEdgeVertex, secondEdgeVertex;
+
+                    if (originalTriangle.V1 == v1 && originalTriangle.V2 == v2)
+                    {
+                        // 辺が V1→V2 の順序
+                        firstEdgeVertex = v1;
+                        secondEdgeVertex = v2;
+                    }
+                    else if (originalTriangle.V2 == v1 && originalTriangle.V3 == v2)
+                    {
+                        // 辺が V2→V3 の順序
+                        firstEdgeVertex = v1;
+                        secondEdgeVertex = v2;
+                    }
+                    else if (originalTriangle.V3 == v1 && originalTriangle.V1 == v2)
+                    {
+                        // 辺が V3→V1 の順序
+                        firstEdgeVertex = v1;
+                        secondEdgeVertex = v2;
+                    }
+                    else
+                    {
+                        // 逆順の場合
+                        firstEdgeVertex = v2;
+                        secondEdgeVertex = v1;
+                    }
+
+                    // 元の三角形の接続順序を維持して2つの新しい三角形を作成
+                    triangles.Add(new Triangle(firstEdgeVertex, midpointIndex, oppositeVertex));
+                    triangles.Add(new Triangle(midpointIndex, secondEdgeVertex, oppositeVertex));
                 }
             }
+        }
+
+        private int GetOppositeVertex(Triangle triangle, int edgeVertex1, int edgeVertex2)
+        {
+            if ((triangle.V1 == edgeVertex1 || triangle.V1 == edgeVertex2) &&
+                (triangle.V2 == edgeVertex1 || triangle.V2 == edgeVertex2))
+            {
+                return triangle.V3;
+            }
+            else if ((triangle.V2 == edgeVertex1 || triangle.V2 == edgeVertex2) &&
+                     (triangle.V3 == edgeVertex1 || triangle.V3 == edgeVertex2))
+            {
+                return triangle.V1;
+            }
+            else if ((triangle.V3 == edgeVertex1 || triangle.V3 == edgeVertex2) &&
+                     (triangle.V1 == edgeVertex1 || triangle.V1 == edgeVertex2))
+            {
+                return triangle.V2;
+            }
+            return -1;
         }
 
         private void DrawTemporaryTriangle(Graphics g)
