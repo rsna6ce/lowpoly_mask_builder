@@ -37,18 +37,20 @@ namespace lowpoly_mask_builder
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exportToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.export2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.optionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.transparentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.surfaceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.unifyTriangleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.flipAllTriangleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pictureBoxRight = new System.Windows.Forms.PictureBox();
             this.vScrollBarZ = new System.Windows.Forms.VScrollBar();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.statusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.numericUpDownZ = new System.Windows.Forms.NumericUpDown();
             this.buttonPreview = new System.Windows.Forms.Button();
-            this.optionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.transparentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.surfaceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.export2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.unifyTriangleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.flipAllTriangleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.labelX0 = new System.Windows.Forms.Label();
+            this.labelY0 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeft)).BeginInit();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRight)).BeginInit();
@@ -72,7 +74,7 @@ namespace lowpoly_mask_builder
             this.optionToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1252, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1274, 24);
             this.menuStrip1.TabIndex = 1;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -91,30 +93,75 @@ namespace lowpoly_mask_builder
             // newToolStripMenuItem
             // 
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.newToolStripMenuItem.Text = "New";
             this.newToolStripMenuItem.Click += new System.EventHandler(this.newToolStripMenuItem_Click);
             // 
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // saveAsToolStripMenuItem
             // 
             this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.saveAsToolStripMenuItem.Text = "Save as";
             this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
             // 
             // exportToolStripMenuItem
             // 
             this.exportToolStripMenuItem.Name = "exportToolStripMenuItem";
-            this.exportToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.exportToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
             this.exportToolStripMenuItem.Text = "Export Surface STL";
             this.exportToolStripMenuItem.Click += new System.EventHandler(this.exportToolStripMenuItem_Click);
+            // 
+            // export2ToolStripMenuItem
+            // 
+            this.export2ToolStripMenuItem.Name = "export2ToolStripMenuItem";
+            this.export2ToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.export2ToolStripMenuItem.Text = "Export Volume STL";
+            this.export2ToolStripMenuItem.Click += new System.EventHandler(this.export2ToolStripMenuItem_Click);
+            // 
+            // optionToolStripMenuItem
+            // 
+            this.optionToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.transparentToolStripMenuItem,
+            this.surfaceToolStripMenuItem,
+            this.unifyTriangleToolStripMenuItem,
+            this.flipAllTriangleToolStripMenuItem});
+            this.optionToolStripMenuItem.Name = "optionToolStripMenuItem";
+            this.optionToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
+            this.optionToolStripMenuItem.Text = "Option";
+            // 
+            // transparentToolStripMenuItem
+            // 
+            this.transparentToolStripMenuItem.Name = "transparentToolStripMenuItem";
+            this.transparentToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.transparentToolStripMenuItem.Text = "Transparent";
+            this.transparentToolStripMenuItem.Click += new System.EventHandler(this.transparentToolStripMenuItem_Click);
+            // 
+            // surfaceToolStripMenuItem
+            // 
+            this.surfaceToolStripMenuItem.Name = "surfaceToolStripMenuItem";
+            this.surfaceToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.surfaceToolStripMenuItem.Text = "Surface";
+            // 
+            // unifyTriangleToolStripMenuItem
+            // 
+            this.unifyTriangleToolStripMenuItem.Name = "unifyTriangleToolStripMenuItem";
+            this.unifyTriangleToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.unifyTriangleToolStripMenuItem.Text = "Unify triangle";
+            this.unifyTriangleToolStripMenuItem.Click += new System.EventHandler(this.unifyTriangleToolStripMenuItem_Click);
+            // 
+            // flipAllTriangleToolStripMenuItem
+            // 
+            this.flipAllTriangleToolStripMenuItem.Name = "flipAllTriangleToolStripMenuItem";
+            this.flipAllTriangleToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.flipAllTriangleToolStripMenuItem.Text = "Flip all triangle";
+            this.flipAllTriangleToolStripMenuItem.Click += new System.EventHandler(this.flipAllTriangleToolStripMenuItem_Click);
             // 
             // pictureBoxRight
             // 
@@ -132,9 +179,9 @@ namespace lowpoly_mask_builder
             // vScrollBarZ
             // 
             this.vScrollBarZ.LargeChange = 1;
-            this.vScrollBarZ.Location = new System.Drawing.Point(1212, 28);
+            this.vScrollBarZ.Location = new System.Drawing.Point(1236, 28);
             this.vScrollBarZ.Name = "vScrollBarZ";
-            this.vScrollBarZ.Size = new System.Drawing.Size(32, 864);
+            this.vScrollBarZ.Size = new System.Drawing.Size(28, 900);
             this.vScrollBarZ.TabIndex = 2;
             this.vScrollBarZ.Scroll += new System.Windows.Forms.ScrollEventHandler(this.vScrollBarZ_Scroll);
             // 
@@ -143,9 +190,9 @@ namespace lowpoly_mask_builder
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.statusLabel1});
             this.statusStrip1.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
-            this.statusStrip1.Location = new System.Drawing.Point(0, 936);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 953);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(1252, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(1274, 22);
             this.statusStrip1.TabIndex = 3;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -157,7 +204,7 @@ namespace lowpoly_mask_builder
             // 
             // numericUpDownZ
             // 
-            this.numericUpDownZ.Location = new System.Drawing.Point(1208, 900);
+            this.numericUpDownZ.Location = new System.Drawing.Point(1232, 928);
             this.numericUpDownZ.Name = "numericUpDownZ";
             this.numericUpDownZ.Size = new System.Drawing.Size(40, 19);
             this.numericUpDownZ.TabIndex = 4;
@@ -174,56 +221,31 @@ namespace lowpoly_mask_builder
             this.buttonPreview.Visible = false;
             this.buttonPreview.Click += new System.EventHandler(this.buttonPreview_Click);
             // 
-            // optionToolStripMenuItem
+            // labelX0
             // 
-            this.optionToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.transparentToolStripMenuItem,
-            this.surfaceToolStripMenuItem,
-            this.unifyTriangleToolStripMenuItem,
-            this.flipAllTriangleToolStripMenuItem});
-            this.optionToolStripMenuItem.Name = "optionToolStripMenuItem";
-            this.optionToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
-            this.optionToolStripMenuItem.Text = "Option";
+            this.labelX0.AutoSize = true;
+            this.labelX0.Location = new System.Drawing.Point(604, 932);
+            this.labelX0.Name = "labelX0";
+            this.labelX0.Size = new System.Drawing.Size(11, 12);
+            this.labelX0.TabIndex = 6;
+            this.labelX0.Text = "0";
             // 
-            // transparentToolStripMenuItem
+            // labelY0
             // 
-            this.transparentToolStripMenuItem.Name = "transparentToolStripMenuItem";
-            this.transparentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.transparentToolStripMenuItem.Text = "Transparent";
-            this.transparentToolStripMenuItem.Click += new System.EventHandler(this.transparentToolStripMenuItem_Click);
-            // 
-            // surfaceToolStripMenuItem
-            // 
-            this.surfaceToolStripMenuItem.Name = "surfaceToolStripMenuItem";
-            this.surfaceToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.surfaceToolStripMenuItem.Text = "Surface";
-            // 
-            // export2ToolStripMenuItem
-            // 
-            this.export2ToolStripMenuItem.Name = "export2ToolStripMenuItem";
-            this.export2ToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.export2ToolStripMenuItem.Text = "Export Volume STL";
-            this.export2ToolStripMenuItem.Click += new System.EventHandler(this.export2ToolStripMenuItem_Click);
-            // 
-            // unifyTriangleToolStripMenuItem
-            // 
-            this.unifyTriangleToolStripMenuItem.Name = "unifyTriangleToolStripMenuItem";
-            this.unifyTriangleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.unifyTriangleToolStripMenuItem.Text = "Unify triangle";
-            this.unifyTriangleToolStripMenuItem.Click += new System.EventHandler(this.unifyTriangleToolStripMenuItem_Click);
-            // 
-            // flipAllTriangleToolStripMenuItem
-            // 
-            this.flipAllTriangleToolStripMenuItem.Name = "flipAllTriangleToolStripMenuItem";
-            this.flipAllTriangleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.flipAllTriangleToolStripMenuItem.Text = "Flip all triangle";
-            this.flipAllTriangleToolStripMenuItem.Click += new System.EventHandler(this.flipAllTriangleToolStripMenuItem_Click);
+            this.labelY0.AutoSize = true;
+            this.labelY0.Location = new System.Drawing.Point(1204, 916);
+            this.labelY0.Name = "labelY0";
+            this.labelY0.Size = new System.Drawing.Size(11, 12);
+            this.labelY0.TabIndex = 6;
+            this.labelY0.Text = "0";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1252, 958);
+            this.ClientSize = new System.Drawing.Size(1274, 975);
+            this.Controls.Add(this.labelY0);
+            this.Controls.Add(this.labelX0);
             this.Controls.Add(this.buttonPreview);
             this.Controls.Add(this.numericUpDownZ);
             this.Controls.Add(this.statusStrip1);
@@ -236,6 +258,7 @@ namespace lowpoly_mask_builder
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Lowpoly mask builder";
+            this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeft)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -269,6 +292,8 @@ namespace lowpoly_mask_builder
         private System.Windows.Forms.ToolStripMenuItem surfaceToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem unifyTriangleToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem flipAllTriangleToolStripMenuItem;
+        private System.Windows.Forms.Label labelX0;
+        private System.Windows.Forms.Label labelY0;
     }
 }
 

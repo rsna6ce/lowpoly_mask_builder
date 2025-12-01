@@ -37,6 +37,11 @@ namespace lowpoly_mask_builder
             InitializeComponent();
             InitializeHeightMapCheckBox();
             InitializeModel();
+            
+        }
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            InitializeGridLabel();
         }
         private void InitializeHeightMapCheckBox()
         {
@@ -72,6 +77,27 @@ namespace lowpoly_mask_builder
             activeEdge = null;
             isAddingTriangle = false;
             pictureBoxRight.Invalidate();
+        }
+
+        private void InitializeGridLabel()
+        {
+            // 軸ラベル
+            for (int n = 10; n <= 190; n += 10)
+            {
+                Label lbl = labelX0.Clone();
+                lbl.Name = $"labelX{n}";
+                lbl.Text = $"{n}";
+                lbl.Location = new Point(labelX0.Location.X + 3 * n, labelX0.Location.Y);
+                this.Controls.Add(lbl);
+            }
+            for (int n = 10; n <= 290; n += 10)
+            {
+                Label lbl = labelY0.Clone();
+                lbl.Name = $"labelY{n}";
+                lbl.Text = $"{n}";
+                lbl.Location = new Point(labelY0.Location.X, labelY0.Location.Y - 3 * n);
+                this.Controls.Add(lbl);
+            }
         }
 
         private void pictureBoxRight_Paint(object sender, PaintEventArgs e)
@@ -156,20 +182,35 @@ namespace lowpoly_mask_builder
 
         private void DrawGrid(Graphics g)
         {
-            Pen gridPen = new Pen(Color.FromArgb(200, 200, 200));
+            Pen gridPen = new Pen(Color.FromArgb(128, 128, 128));
+            Pen gridPen2 = new Pen(Color.FromArgb(64, 64, 64));
 
             for (int x = 0; x <= WORLD_WIDTH; x += 2)
             {
-                int screenX = (int)(x * (float)pictureBoxRight.Width / WORLD_WIDTH);
-                g.DrawLine(gridPen, screenX, 0, screenX, pictureBoxRight.Height);
+                int screenX = (int)(x * (float)pictureBoxRight.Width / WORLD_WIDTH)-0;
+                if (x % 10 == 0)
+                {
+                    g.DrawLine(gridPen2, screenX, 0, screenX, pictureBoxRight.Height);
+                } 
+                else
+                {
+                    g.DrawLine(gridPen, screenX, 0, screenX, pictureBoxRight.Height);
+                }
             }
 
             // Y座標を反転してグリッドを描画
             for (int y = 0; y <= WORLD_HEIGHT; y += 2)
             {
                 // y=0が下部に来るように反転させる
-                int screenY = (int)((WORLD_HEIGHT - y) * (float)pictureBoxRight.Height / WORLD_HEIGHT);
-                g.DrawLine(gridPen, 0, screenY, pictureBoxRight.Width, screenY);
+                int screenY = (int)((WORLD_HEIGHT - y) * (float)pictureBoxRight.Height / WORLD_HEIGHT)-1;
+                if (y % 10 == 0)
+                {
+                    g.DrawLine(gridPen2, 0, screenY, pictureBoxRight.Width, screenY);
+                }
+                else
+                {
+                    g.DrawLine(gridPen, 0, screenY, pictureBoxRight.Width, screenY);
+                }
             }
         }
 
@@ -1804,5 +1845,29 @@ namespace lowpoly_mask_builder
         public int V1 { get; set; }
         public int V2 { get; set; }
         public int V3 { get; set; }
+    }
+
+    public static class ControlExtensions
+    {
+        public static Label Clone(this Label source)
+        {
+            Label lbl = new Label();
+
+            lbl.AutoSize = source.AutoSize;
+            lbl.Size = source.Size;
+            lbl.Font = source.Font;
+            lbl.ForeColor = source.ForeColor;
+            lbl.BackColor = source.BackColor;
+            lbl.TextAlign = source.TextAlign;
+            lbl.BorderStyle = source.BorderStyle;
+            lbl.Padding = source.Padding;
+            lbl.Margin = source.Margin;
+            lbl.Visible = source.Visible;
+            lbl.Enabled = source.Enabled;
+            lbl.Tag = source.Tag;           // 必要なら
+                                            // 必要に応じて他のプロパティも追加してください
+
+            return lbl;
+        }
     }
 }
