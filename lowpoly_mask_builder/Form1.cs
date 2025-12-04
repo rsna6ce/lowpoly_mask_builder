@@ -239,7 +239,7 @@ namespace lowpoly_mask_builder
 
         private void DrawEdge(Graphics g, Point start, Point end, bool isActive)
         {
-            float penWidth = isActive ? 3.0f : 1.8f;
+            float penWidth = isActive ? 3.0f : 2f;
             Pen pen = new Pen(Color.Black, penWidth);
             g.DrawLine(pen, start, end);
         }
