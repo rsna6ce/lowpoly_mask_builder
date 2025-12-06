@@ -29,6 +29,7 @@ namespace lowpoly_mask_builder
         private const int GRID_SIZE = 1;
         private const int WORLD_WIDTH = 200;
         private const int WORLD_HEIGHT = 300;
+        private const int WORLD_DEPTH = 100;
         private const int POINT_RADIUS = 4;
         private const int EDGE_ACTIVE_DISTANCE = 8;
         private const int THICKNESS_MM = 2;
@@ -1793,6 +1794,33 @@ namespace lowpoly_mask_builder
         private void RefreshPreview()
         {
             previewForm?.UpdateModel(vertices, triangles);
+        }
+
+        private void scaleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var scaleForm = new FormScale())
+            {
+                if (scaleForm.ShowDialog(this) == DialogResult.OK)
+                {
+                    float sx = scaleForm.ScaleX / 100.0f;
+                    float sy = scaleForm.ScaleY / 100.0f;
+                    float sz = scaleForm.ScaleZ / 100.0f;
+
+                    foreach (var v in vertices)
+                    {
+                        if (v.X == -1 && v.Y == -1) continue; // 無効頂点はスキップ
+
+                        v.X = Math.Min((int)(v.X * sx + 0.5f),WORLD_WIDTH);
+                        v.Y = Math.Min((int)(v.Y * sy + 0.5f), WORLD_HEIGHT);
+                        v.Z = Math.Min((int)(v.Z * sz + 0.5f), WORLD_DEPTH);
+                    }
+
+                    // 再描画
+                    pictureBoxRight.Invalidate();
+                    DrawMirrorImage();
+                    RefreshPreview();
+                }
+            }
         }
     }
 
