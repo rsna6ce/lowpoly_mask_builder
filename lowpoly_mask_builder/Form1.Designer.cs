@@ -40,7 +40,7 @@ namespace lowpoly_mask_builder
             this.export2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.optionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.transparentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.surfaceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.previewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unifyTriangleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.flipAllTriangleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pictureBoxRight = new System.Windows.Forms.PictureBox();
@@ -128,7 +128,7 @@ namespace lowpoly_mask_builder
             // 
             this.optionToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.transparentToolStripMenuItem,
-            this.surfaceToolStripMenuItem,
+            this.previewToolStripMenuItem,
             this.unifyTriangleToolStripMenuItem,
             this.flipAllTriangleToolStripMenuItem});
             this.optionToolStripMenuItem.Name = "optionToolStripMenuItem";
@@ -138,27 +138,28 @@ namespace lowpoly_mask_builder
             // transparentToolStripMenuItem
             // 
             this.transparentToolStripMenuItem.Name = "transparentToolStripMenuItem";
-            this.transparentToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.transparentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.transparentToolStripMenuItem.Text = "Transparent";
             this.transparentToolStripMenuItem.Click += new System.EventHandler(this.transparentToolStripMenuItem_Click);
             // 
-            // surfaceToolStripMenuItem
+            // previewToolStripMenuItem
             // 
-            this.surfaceToolStripMenuItem.Name = "surfaceToolStripMenuItem";
-            this.surfaceToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
-            this.surfaceToolStripMenuItem.Text = "Surface";
+            this.previewToolStripMenuItem.Name = "previewToolStripMenuItem";
+            this.previewToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.previewToolStripMenuItem.Text = "Preview";
+            this.previewToolStripMenuItem.Click += new System.EventHandler(this.previewToolStripMenuItem_Click);
             // 
             // unifyTriangleToolStripMenuItem
             // 
             this.unifyTriangleToolStripMenuItem.Name = "unifyTriangleToolStripMenuItem";
-            this.unifyTriangleToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.unifyTriangleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.unifyTriangleToolStripMenuItem.Text = "Unify triangle";
             this.unifyTriangleToolStripMenuItem.Click += new System.EventHandler(this.unifyTriangleToolStripMenuItem_Click);
             // 
             // flipAllTriangleToolStripMenuItem
             // 
             this.flipAllTriangleToolStripMenuItem.Name = "flipAllTriangleToolStripMenuItem";
-            this.flipAllTriangleToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.flipAllTriangleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.flipAllTriangleToolStripMenuItem.Text = "Flip all triangle";
             this.flipAllTriangleToolStripMenuItem.Click += new System.EventHandler(this.flipAllTriangleToolStripMenuItem_Click);
             // 
@@ -275,7 +276,7 @@ namespace lowpoly_mask_builder
         private System.Windows.Forms.ToolStripMenuItem optionToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem transparentToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem export2ToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem surfaceToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem previewToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem unifyTriangleToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem flipAllTriangleToolStripMenuItem;
         private System.Windows.Forms.Label labelX0;

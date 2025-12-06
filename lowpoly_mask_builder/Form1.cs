@@ -15,6 +15,7 @@ namespace lowpoly_mask_builder
     {
         private ToolStripControlHost heightMapCheckBoxHost;
         private CheckBox heightMapCheckBox;
+        private FormPreview previewForm;
 
         private List<Vertex> vertices = new List<Vertex>();
         private List<Triangle> triangles = new List<Triangle>();
@@ -1724,6 +1725,22 @@ namespace lowpoly_mask_builder
 
             MessageBox.Show($"All triangles have been flipped.\nNumber of flipped triangles: {flippedCount}",
                             "Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void previewToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // まだ作っていないときだけインスタンス化（2重起動防止）
+            if (previewForm == null || previewForm.IsDisposed)
+            {
+                previewForm = new FormPreview();
+                previewForm.Owner = this;                 // ← これが最重要！
+                previewForm.FormClosed += (s, args) => previewForm = null; // 閉じたら参照を破棄
+                previewForm.Show();                       // Show() で非モーダル表示
+            }
+            else
+            {
+                previewForm.BringToFront();               // すでに開いている場合は手前に出す
+            }
         }
     }
 
