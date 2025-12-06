@@ -38,7 +38,7 @@ namespace lowpoly_mask_builder
             this.glControl1.BackColor = System.Drawing.Color.Black;
             this.glControl1.Location = new System.Drawing.Point(0, 0);
             this.glControl1.Name = "glControl1";
-            this.glControl1.Size = new System.Drawing.Size(640, 640);
+            this.glControl1.Size = new System.Drawing.Size(640, 720);
             this.glControl1.TabIndex = 0;
             this.glControl1.VSync = false;
             // 
@@ -46,7 +46,7 @@ namespace lowpoly_mask_builder
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(640, 640);
+            this.ClientSize = new System.Drawing.Size(640, 720);
             this.Controls.Add(this.glControl1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));

@@ -36,12 +36,32 @@ namespace lowpoly_mask_builder
 
         private void glControl1_Load(object sender, EventArgs e)
         {
-            GL.ClearColor(Color.CornflowerBlue);
+            GL.ClearColor(Color.Gray);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Back);
 
             GL.FrontFace(FrontFaceDirection.Ccw);
+
+            GL.Enable(EnableCap.Lighting);
+            GL.Enable(EnableCap.Light0);
+            GL.Enable(EnableCap.Light1);
+            GL.Enable(EnableCap.ColorMaterial);           // 頂点色をそのまま材質に使う
+            GL.ColorMaterial(MaterialFace.FrontAndBack, ColorMaterialParameter.AmbientAndDiffuse);
+
+            // ライトの位置（斜め上から照らす＝顔が一番きれいに見える）
+            float[] lightPos = { 150f, 200f, 400f, 0f };  // (x, y, z, w=0=方向光)
+            float[] lightDiffuse = { 1.0f, 1.0f, 1.0f, 1.0f };   // 白い光
+            float[] lightAmbient = { 0.35f, 0.35f, 0.4f, 1.0f }; // ちょっと環境光
+
+            GL.Light(LightName.Light0, LightParameter.Position, lightPos);
+            GL.Light(LightName.Light0, LightParameter.Diffuse, lightDiffuse);
+            GL.Light(LightName.Light0, LightParameter.Ambient, lightAmbient);
+
+            GL.Enable(EnableCap.Light1);
+            float[] lightPos2 = { -200f, 150f, 300f, 0f };
+            GL.Light(LightName.Light1, LightParameter.Position, lightPos2);
+            GL.Light(LightName.Light1, LightParameter.Diffuse, new float[] { 0.6f, 0.6f, 0.8f, 1f });
 
             SetupProjection();
         }
@@ -88,11 +108,16 @@ namespace lowpoly_mask_builder
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.LoadIdentity();
 
+            // Light0 の位置設定を削除（Loadで設定済みのため）
+            // GL.Light(LightName.Light0, LightParameter.Position, new float[] { 100f, 200f, 400f, 0f }); 
+
             // カメラ操作
             GL.Translate(panX, panY, -500.0f * zoom);
-            GL.Rotate(rotX, 1.0f, 0.0f, 0.0f);           // まず真上から
-            GL.Rotate(rotY, 0.0f, 1.0f, 0.0f);           // その後左右に首を振る
-            GL.Translate(0.0f, -150.0f, 0.0f);        // モデル中心を原点に（Zも少し下げる）
+            GL.Rotate(rotX, 1.0f, 0.0f, 0.0f);        // まず真上から
+            GL.Rotate(rotY, 0.0f, 1.0f, 0.0f);        // その後左右に首を振る
+            GL.Translate(0.0f, -150.0f, 0.0f);     // モデル中心を原点に（Zも少し下げる）
+
+            double bright = 0.6;
 
             foreach (var t in triangles)
             {
@@ -100,27 +125,42 @@ namespace lowpoly_mask_builder
                 var b = vertices[t.V2];
                 var c = vertices[t.V3];
 
+                // --- 1. 面の法線ベクトルを計算 ---
+                Vector3 v_ab = new Vector3(b.X - a.X, b.Y - a.Y, b.Z - a.Z);
+                Vector3 v_ac = new Vector3(c.X - a.X, c.Y - a.Y, c.Z - a.Z);
+                Vector3 normal = Vector3.Cross(v_ab, v_ac);
+                normal.Normalize();
+
                 GL.Begin(PrimitiveType.Triangles);
 
-                // 表面（反時計回り）→ 灰色
-                GL.Color3(0.7, 0.7, 0.7);
+                // --- 表面 (法線設定を追加) ---
+                GL.Normal3(normal); // 法線ベクトルを設定
+                GL.Color3(0.78 * bright, 0.78 * bright, 0.7 * bright);
                 GL.Vertex3(a.X, a.Y, a.Z);
                 GL.Vertex3(b.X, b.Y, b.Z);
                 GL.Vertex3(c.X, c.Y, c.Z);
 
-                // 裏面（時計回り）→ 赤
+                // --- 裏面 (法線設定を追加) ---
+                GL.Normal3(-normal); // 裏面なので法線を反転
                 GL.Color3(1.0, 0.3, 0.3);
                 GL.Vertex3(c.X, c.Y, c.Z);
                 GL.Vertex3(b.X, b.Y, b.Z);
                 GL.Vertex3(a.X, a.Y, a.Z);
 
-                // 表面（反時計回り）→ 灰色
-                GL.Color3(0.7, 0.7, 0.7);
+                // --- 表面（-Xミラー）---
+                Vector3 normal_mirrored_correct = new Vector3(
+                    -normal.X, // X座標を反転させているので、法線のX成分も反転
+                    normal.Y,
+                    normal.Z);
+
+                GL.Normal3(normal_mirrored_correct); // 法線ベクトルを設定
+                GL.Color3(0.78 * bright, 0.78 * bright, 0.7 * bright);
                 GL.Vertex3(-c.X, c.Y, c.Z);
                 GL.Vertex3(-b.X, b.Y, b.Z);
                 GL.Vertex3(-a.X, a.Y, a.Z);
 
-                // 裏面（時計回り）→ 赤
+                // --- 裏面（-Xミラー）---
+                GL.Normal3(-normal_mirrored_correct); // 裏面なので法線を反転
                 GL.Color3(1.0, 0.3, 0.3);
                 GL.Vertex3(-a.X, a.Y, a.Z);
                 GL.Vertex3(-b.X, b.Y, b.Z);
@@ -128,12 +168,13 @@ namespace lowpoly_mask_builder
                 GL.End();
             }
 
+            // --- ワイヤーフレーム描画（法線は不要）---
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            GL.Disable(EnableCap.Lighting); // ワイヤーフレーム描画中はライティングを無効化
             GL.LineWidth(1.5f);
             GL.Color3(0.15, 0.15, 0.15);
 
             GL.Begin(PrimitiveType.Triangles);
-
             foreach (var t in triangles)
             {
                 var a = vertices[t.V1];
@@ -148,9 +189,9 @@ namespace lowpoly_mask_builder
                 GL.Vertex3(-b.X, b.Y, b.Z);
                 GL.Vertex3(-a.X, a.Y, a.Z);
             }
-
             GL.End();
 
+            GL.Enable(EnableCap.Lighting); // 塗りつぶし描画に戻す前にライティングを有効に戻す
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             glControl1.SwapBuffers();
