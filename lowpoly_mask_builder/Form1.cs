@@ -38,11 +38,12 @@ namespace lowpoly_mask_builder
             InitializeComponent();
             InitializeHeightMapCheckBox();
             InitializeModel();
-            
+            pictureBoxRight.MouseWheel += PictureBoxRight_MouseWheel;
         }
         private void Form1_Load(object sender, EventArgs e)
         {
             InitializeGridLabel();
+            pictureBoxRight.MouseEnter += (s, args) => pictureBoxRight.Focus();
         }
         private void InitializeHeightMapCheckBox()
         {
@@ -424,6 +425,43 @@ namespace lowpoly_mask_builder
 
                 gLeft.Dispose();
             }
+        }
+
+        private void PictureBoxRight_MouseWheel(object sender, MouseEventArgs e)
+        {
+            // 頂点が選択されていないときは無視
+            if (selectedVertex == null) return;
+
+            // ホイールの移動量（通常 120 の倍数）
+            int delta = e.Delta;
+
+            // 感度調整：120（1ノッチ）で Z が 1～5 くらい動くとちょうど良い
+            int step = 3;  // お好みで 1～5 くらいに調整してください
+
+            // ホイール上 = 正、ホイール下 = 負
+            int change = (delta > 0) ? step : -step;
+
+            // 新しいZ値（範囲は 0 ～ 100 を想定？ 必要に応じて変更）
+            int newZ = Math.Max(0, Math.Min(100, selectedVertex.Z + change));
+
+            // 頂点のZを更新
+            selectedVertex.Z = newZ;
+
+            // vScrollBarZ と完全に同期（これが重要！）
+            // あなたのコードでは vScrollBarZ.Value = Maximum - Z となっているので同じルールで
+            vScrollBarZ.Value = Math.Max(vScrollBarZ.Minimum,
+                                         Math.Min(vScrollBarZ.Maximum, vScrollBarZ.Maximum - newZ));
+
+            // NumericUpDown も同期
+            if (numericUpDownZ.Value != newZ)
+            {
+                numericUpDownZ.Value = newZ;
+            }
+
+            // 再描画と更新
+            DrawMirrorImage();
+            RefreshPreview();
+            UpdateStatusLabel();
         }
 
         private void MergeVerticesAtSamePosition(Vertex primaryVertex)
