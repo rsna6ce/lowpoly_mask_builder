@@ -389,6 +389,9 @@ namespace lowpoly_mask_builder
             // 必要に応じて座標表示を更新（選択状態が変化した場合）
             UpdateStatusLabel();
 
+            // 3D プレビューのデータ更新
+            RefreshPreview();
+
             pictureBoxRight.Invalidate();
         }
 
@@ -879,6 +882,7 @@ namespace lowpoly_mask_builder
             {
                 selectedVertex.Z = vScrollBarZ.Maximum - vScrollBarZ.Value;
                 DrawMirrorImage();
+                RefreshPreview();
                 UpdateStatusLabel();  // ステータスラベルを更新
 
                 // NumericUpDownの値も同期
@@ -893,6 +897,7 @@ namespace lowpoly_mask_builder
         {
             InitializeModel();
             DrawMirrorImage();
+            RefreshPreview();
         }
 
         private class Edge
@@ -951,6 +956,7 @@ namespace lowpoly_mask_builder
 
                         pictureBoxRight.Invalidate();
                         DrawMirrorImage();
+                        RefreshPreview();
                     }
                     catch (Exception ex)
                     {
@@ -1036,6 +1042,7 @@ namespace lowpoly_mask_builder
                     }
                     DrawMirrorImage();
                     UpdateStatusLabel();  // ステータスラベルを更新
+                    RefreshPreview();
                 }
             }
         }
@@ -1649,6 +1656,7 @@ namespace lowpoly_mask_builder
 
             pictureBoxRight.Invalidate();
             DrawMirrorImage();
+            RefreshPreview();
 
             MessageBox.Show($"Triangle orientations have been unified.\nNumber of flipped triangles: {flippedCount}",
                             "Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1722,6 +1730,7 @@ namespace lowpoly_mask_builder
             // 画面を更新
             pictureBoxRight.Invalidate();
             DrawMirrorImage();
+            RefreshPreview();
 
             MessageBox.Show($"All triangles have been flipped.\nNumber of flipped triangles: {flippedCount}",
                             "Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1735,6 +1744,7 @@ namespace lowpoly_mask_builder
                 previewForm = new FormPreview();
                 previewForm.Owner = this;                 // ← これが最重要！
                 previewForm.FormClosed += (s, args) => previewForm = null; // 閉じたら参照を破棄
+                previewForm.UpdateModel(vertices, triangles);
                 previewForm.Show();                       // Show() で非モーダル表示
             }
             else
@@ -1742,7 +1752,12 @@ namespace lowpoly_mask_builder
                 previewForm.BringToFront();               // すでに開いている場合は手前に出す
             }
         }
+        private void RefreshPreview()
+        {
+            previewForm?.UpdateModel(vertices, triangles);
+        }
     }
+
 
     public class Vertex
     {
