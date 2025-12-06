@@ -17,6 +17,8 @@ namespace lowpoly_mask_builder
         private float rotX = 0f;
         private float rotY = 0f;
         private Point lastPos;
+        private float panX = 0.0f;   // 左右移動
+        private float panY = 0.0f;   // 上下移動
 
         public FormPreview()
         {
@@ -29,6 +31,7 @@ namespace lowpoly_mask_builder
             glControl1.MouseWheel += glControl1_MouseWheel;
             glControl1.MouseDown += glControl1_MouseDown;
             glControl1.MouseMove += glControl1_MouseMove;
+            glControl1.MouseUp += glControl1_MouseUp;
         }
 
         private void glControl1_Load(object sender, EventArgs e)
@@ -86,7 +89,7 @@ namespace lowpoly_mask_builder
             GL.LoadIdentity();
 
             // カメラ操作
-            GL.Translate(0.0f, 0.0f, -500.0f * zoom);   // ズーム
+            GL.Translate(panX, panY, -500.0f * zoom);
             GL.Rotate(rotX, 1.0f, 0.0f, 0.0f);           // まず真上から
             GL.Rotate(rotY, 0.0f, 1.0f, 0.0f);           // その後左右に首を振る
             GL.Translate(0.0f, -150.0f, 0.0f);        // モデル中心を原点に（Zも少し下げる）
@@ -162,14 +165,18 @@ namespace lowpoly_mask_builder
 
         private void glControl1_MouseDown(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left)
-                lastPos = e.Location;
+            lastPos = e.Location;  // 左右共通でOK
+            if (e.Button == MouseButtons.Left || e.Button == MouseButtons.Right)
+            {
+                glControl1.Capture = true;  // マウスキャプチャ（ウィンドウ外でも追従）
+            }
         }
 
         private void glControl1_MouseMove(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
+                // 左ドラッグ＝回転（今まで通り）
                 int dx = e.X - lastPos.X;
                 int dy = e.Y - lastPos.Y;
                 rotY += dx * 0.5f;
@@ -177,6 +184,26 @@ namespace lowpoly_mask_builder
                 lastPos = e.Location;
                 glControl1.Invalidate();
             }
+            else if (e.Button == MouseButtons.Right)
+            {
+                // 右ドラッグ＝パン（水平移動）
+                int dx = e.X - lastPos.X;
+                int dy = e.Y - lastPos.Y;
+
+                // 感度調整（カメラ距離に応じて自然に動くように）
+                float sensitivity = 0.5f * zoom;
+
+                panX += dx * sensitivity;
+                panY -= dy * sensitivity;  // Yは画面下が正なので反転
+
+                lastPos = e.Location;
+                glControl1.Invalidate();
+            }
+        }
+
+        private void glControl1_MouseUp(object sender, MouseEventArgs e)
+        {
+            glControl1.Capture = false;
         }
 
         // Form1 から呼ばれる更新メソッド
