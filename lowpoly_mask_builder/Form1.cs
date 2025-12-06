@@ -1837,6 +1837,34 @@ namespace lowpoly_mask_builder
                 }
             }
         }
+
+        private void moveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var moveForm = new FormMove())
+            {
+                if (moveForm.ShowDialog(this) == DialogResult.OK)
+                {
+                    SaveUndoState();
+
+                    int sx = moveForm.MoveX;
+                    int sy = moveForm.MoveY;
+                    int sz = moveForm.MoveZ;
+
+                    foreach (var v in vertices)
+                    {
+                        if (v.X == -1 && v.Y == -1) continue;
+
+                        v.X = Math.Max(0, Math.Min(WORLD_WIDTH, (v.X + sx)));
+                        v.Y = Math.Max(0, Math.Min(WORLD_HEIGHT, (v.Y + sy)));
+                        v.Z = Math.Max(0, Math.Min(WORLD_DEPTH, (v.Z + sz)));
+                    }
+
+                    pictureBoxRight.Invalidate();
+                    DrawMirrorImage();
+                    RefreshPreview();
+                }
+            }
+        }
     }
 
     // 以下、クラス定義（変更なし）
