@@ -48,7 +48,6 @@ namespace lowpoly_mask_builder
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.statusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.numericUpDownZ = new System.Windows.Forms.NumericUpDown();
-            this.buttonPreview = new System.Windows.Forms.Button();
             this.labelX0 = new System.Windows.Forms.Label();
             this.labelY0 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeft)).BeginInit();
@@ -210,17 +209,6 @@ namespace lowpoly_mask_builder
             this.numericUpDownZ.TabIndex = 4;
             this.numericUpDownZ.ValueChanged += new System.EventHandler(this.numericUpDownZ_ValueChanged);
             // 
-            // buttonPreview
-            // 
-            this.buttonPreview.Location = new System.Drawing.Point(24, 40);
-            this.buttonPreview.Name = "buttonPreview";
-            this.buttonPreview.Size = new System.Drawing.Size(108, 40);
-            this.buttonPreview.TabIndex = 5;
-            this.buttonPreview.Text = "preveiw debug";
-            this.buttonPreview.UseVisualStyleBackColor = true;
-            this.buttonPreview.Visible = false;
-            this.buttonPreview.Click += new System.EventHandler(this.buttonPreview_Click);
-            // 
             // labelX0
             // 
             this.labelX0.AutoSize = true;
@@ -246,7 +234,6 @@ namespace lowpoly_mask_builder
             this.ClientSize = new System.Drawing.Size(1274, 975);
             this.Controls.Add(this.labelY0);
             this.Controls.Add(this.labelX0);
-            this.Controls.Add(this.buttonPreview);
             this.Controls.Add(this.numericUpDownZ);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.vScrollBarZ);
@@ -285,7 +272,6 @@ namespace lowpoly_mask_builder
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel statusLabel1;
         private System.Windows.Forms.NumericUpDown numericUpDownZ;
-        private System.Windows.Forms.Button buttonPreview;
         private System.Windows.Forms.ToolStripMenuItem optionToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem transparentToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem export2ToolStripMenuItem;
