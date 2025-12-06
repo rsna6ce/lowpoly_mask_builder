@@ -13,6 +13,60 @@ namespace lowpoly_mask_builder
 {
     public partial class Form1 : Form
     {
+        // ============================================================
+        // UNDO 機能関連
+        // ============================================================
+        private class ModelState
+        {
+            public List<Vertex> Vertices { get; set; }
+            public List<Triangle> Triangles { get; set; }
+
+            public ModelState(List<Vertex> v, List<Triangle> t)
+            {
+                Vertices = v.Select(x => new Vertex(x.X, x.Y, x.Z)).ToList();
+                Triangles = t.Select(x => new Triangle(x.V1, x.V2, x.V3)).ToList();
+            }
+        }
+
+        private readonly List<ModelState> undoStack = new List<ModelState>();
+        private const int MaxUndoCount = 128;
+
+        private void SaveUndoState()
+        {
+            // 現在の状態を保存（＝変更後の状態）
+            undoStack.Add(new ModelState(vertices, triangles));
+
+            if (undoStack.Count > MaxUndoCount + 1)  // +1 が超重要！
+                undoStack.RemoveAt(0);
+        }
+
+        private void PerformUndo()
+        {
+            // スタックに2個以上入っていないと戻れない（＝空振りしない）
+            if (undoStack.Count < 2) return;
+
+            // 最新（今見えている状態）は無視 → 1つ前の状態に戻る
+            undoStack.RemoveAt(undoStack.Count - 1);  // 今の状態を捨てる
+            ModelState previousState = undoStack[undoStack.Count - 1];  // 1つ前の状態
+
+            // 復元
+            vertices.Clear();
+            triangles.Clear();
+            vertices.AddRange(previousState.Vertices.Select(v => new Vertex(v.X, v.Y, v.Z)));
+            triangles.AddRange(previousState.Triangles.Select(t => new Triangle(t.V1, t.V2, t.V3)));
+
+            selectedVertex = null;
+            activeEdge = null;
+            isAddingTriangle = false;
+            isDragging = false;
+
+            pictureBoxRight.Invalidate();
+            DrawMirrorImage();
+            RefreshPreview();
+            UpdateStatusLabel();
+        }
+        // ============================================================
+
         private ToolStripControlHost heightMapCheckBoxHost;
         private CheckBox heightMapCheckBox;
         private FormPreview previewForm;
@@ -40,24 +94,37 @@ namespace lowpoly_mask_builder
             InitializeHeightMapCheckBox();
             InitializeModel();
             pictureBoxRight.MouseWheel += PictureBoxRight_MouseWheel;
+
+            // Ctrl+Z を有効化
+            this.KeyPreview = true;
+            this.KeyDown += Form1_KeyDown;
         }
+
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Control && e.KeyCode == Keys.Z)
+            {
+                PerformUndo();
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
             InitializeGridLabel();
             pictureBoxRight.MouseEnter += (s, args) => pictureBoxRight.Focus();
         }
+
         private void InitializeHeightMapCheckBox()
         {
-            // CheckBoxを作成
             heightMapCheckBox = new CheckBox();
             heightMapCheckBox.Text = "Hightmap mode  ";
             heightMapCheckBox.CheckedChanged += HeightMapCheckBox_CheckedChanged;
 
-            // ToolStripControlHostを作成してCheckBoxをラップ
             heightMapCheckBoxHost = new ToolStripControlHost(heightMapCheckBox);
-            heightMapCheckBoxHost.Alignment = ToolStripItemAlignment.Right; // 右端に配置
+            heightMapCheckBoxHost.Alignment = ToolStripItemAlignment.Right;
 
-            // statusStripに追加（一番右に配置）
             statusStrip1.Items.Add(heightMapCheckBoxHost);
         }
 
@@ -65,26 +132,30 @@ namespace lowpoly_mask_builder
         {
             DrawMirrorImage();
         }
+
         private void InitializeModel()
         {
             vertices.Clear();
             triangles.Clear();
 
-            vertices.Add(new Vertex(0, 0));   // 頂点0
-            vertices.Add(new Vertex(100, 0)); // 頂点1
-            vertices.Add(new Vertex(0, 100)); // 頂点2
+            vertices.Add(new Vertex(0, 0));
+            vertices.Add(new Vertex(100, 0));
+            vertices.Add(new Vertex(0, 100));
 
             triangles.Add(new Triangle(0, 1, 2));
 
             selectedVertex = null;
             activeEdge = null;
             isAddingTriangle = false;
+
+            undoStack.Clear(); // New のときはスタックもクリア
+            SaveUndoState();   // 初期状態をUNDO可能にしておく
+
             pictureBoxRight.Invalidate();
         }
 
         private void InitializeGridLabel()
         {
-            // 軸ラベル
             for (int n = 10; n <= 190; n += 10)
             {
                 Label lbl = labelX0.Clone();
@@ -124,14 +195,11 @@ namespace lowpoly_mask_builder
             {
                 DrawVertex(gRight, vertex, vertex == selectedVertex);
             }
-            // pictureBoxLeftの描画は削除
         }
 
         private Point MirrorWorldToScreen(Vertex vertex)
         {
-            // pictureBoxRightでの座標を計算
             Point rightScreenPos = WorldToScreen(vertex);
-            // pictureBoxLeftで左右反転した座標を計算
             int mirroredX = pictureBoxLeft.Width - rightScreenPos.X;
             return new Point(mirroredX, rightScreenPos.Y);
         }
@@ -158,7 +226,6 @@ namespace lowpoly_mask_builder
             Point p2 = MirrorWorldToScreen(vertices[triangle.V2]);
             Point p3 = MirrorWorldToScreen(vertices[triangle.V3]);
 
-            // 辺のみを描画
             g.DrawLine(Pens.Black, p1, p2);
             g.DrawLine(Pens.Black, p2, p3);
             g.DrawLine(Pens.Black, p3, p1);
@@ -190,7 +257,7 @@ namespace lowpoly_mask_builder
 
             for (int x = 0; x <= WORLD_WIDTH; x += 2)
             {
-                int screenX = (int)(x * (float)pictureBoxRight.Width / WORLD_WIDTH)-0;
+                int screenX = (int)(x * (float)pictureBoxRight.Width / WORLD_WIDTH);
                 if (x % 10 == 0)
                 {
                     g.DrawLine(gridPen2, screenX, 0, screenX, pictureBoxRight.Height);
@@ -198,14 +265,12 @@ namespace lowpoly_mask_builder
                 else
                 {
                     g.DrawLine(gridPen, screenX, 0, screenX, pictureBoxRight.Height);
-                }
+            	}
             }
 
-            // Y座標を反転してグリッドを描画
             for (int y = 0; y <= WORLD_HEIGHT; y += 2)
             {
-                // y=0が下部に来るように反転させる
-                int screenY = (int)((WORLD_HEIGHT - y) * (float)pictureBoxRight.Height / WORLD_HEIGHT)-1;
+                int screenY = (int)((WORLD_HEIGHT - y) * (float)pictureBoxRight.Height / WORLD_HEIGHT) - 1;
                 if (y % 10 == 0)
                 {
                     g.DrawLine(gridPen2, 0, screenY, pictureBoxRight.Width, screenY);
@@ -213,8 +278,8 @@ namespace lowpoly_mask_builder
                 else
                 {
                     g.DrawLine(gridPen, 0, screenY, pictureBoxRight.Width, screenY);
-                }
-            }
+            	}
+        	}
         }
 
         private void DrawTriangle(Graphics g, Triangle triangle)
@@ -279,7 +344,6 @@ namespace lowpoly_mask_builder
             float scaleX = (float)pictureBoxRight.Width / WORLD_WIDTH;
             float scaleY = (float)pictureBoxRight.Height / WORLD_HEIGHT;
 
-            // Y座標を反転させる：ワールド座標のY=0が画面の下部に来るようにする
             int screenX = (int)(vertex.X * scaleX);
             int screenY = (int)((WORLD_HEIGHT - vertex.Y) * scaleY);
 
@@ -291,7 +355,6 @@ namespace lowpoly_mask_builder
             float scaleX = (float)pictureBoxRight.Width / WORLD_WIDTH;
             float scaleY = (float)pictureBoxRight.Height / WORLD_HEIGHT;
 
-            // 画面座標からワールド座標への変換でY座標を反転させる
             int worldX = (int)(screenPoint.X / scaleX);
             int worldY = WORLD_HEIGHT - (int)(screenPoint.Y / scaleY);
 
@@ -310,7 +373,7 @@ namespace lowpoly_mask_builder
                     vScrollBarZ.Value = vScrollBarZ.Maximum - selectedVertex.Z;
                     numericUpDownZ.Value = selectedVertex.Z;
                     isAddingTriangle = false;
-                    UpdateStatusLabel(); // 座標を表示
+                    UpdateStatusLabel();
                 }
                 else if (activeEdge != null)
                 {
@@ -322,7 +385,7 @@ namespace lowpoly_mask_builder
                     isDragging = false;
                     vScrollBarZ.Value = vScrollBarZ.Maximum;
                     numericUpDownZ.Value = 0;
-                    UpdateStatusLabel(); // 選択解除時に表示を更新
+                    UpdateStatusLabel();
                 }
                 pictureBoxRight.Invalidate();
             }
@@ -342,8 +405,7 @@ namespace lowpoly_mask_builder
                 selectedVertex.X = newX;
                 selectedVertex.Y = newY;
 
-                UpdateStatusLabel(); // 座標を更新して表示
-
+                UpdateStatusLabel();
                 pictureBoxRight.Invalidate();
             }
             else if (!isAddingTriangle)
@@ -366,35 +428,39 @@ namespace lowpoly_mask_builder
             else
             {
                 statusLabel1.Text = "vertex : ";
-            }
+        	}
         }
 
         private void pictureBoxRight_MouseUp(object sender, MouseEventArgs e)
         {
+            bool modelChanged = false;
+
             if (isAddingTriangle && activeEdge != null)
             {
                 AddTriangleFromActiveEdge(e.Location);
+                modelChanged = true;
             }
 
             if (isDragging && selectedVertex != null)
             {
                 MergeVerticesAtSamePosition(selectedVertex);
+                modelChanged = true;
             }
 
-            // pictureBoxLeftを再描画
             DrawMirrorImage();
 
             activeEdge = null;
             isAddingTriangle = false;
             isDragging = false;
 
-            // 必要に応じて座標表示を更新（選択状態が変化した場合）
             UpdateStatusLabel();
-
-            // 3D プレビューのデータ更新
             RefreshPreview();
-
             pictureBoxRight.Invalidate();
+
+            if (modelChanged)
+            {
+                SaveUndoState();
+            }
         }
 
         private void DrawMirrorImage()
@@ -403,22 +469,18 @@ namespace lowpoly_mask_builder
 
             if (heightMapCheckBox.Checked)
             {
-                // ハイトマップモードの場合はハイトマップを生成して表示
                 GenerateAndDisplayHeightMap();
             }
             else
             {
-                // 通常モードの場合は従来の鏡像描画を実行
                 Graphics gLeft = pictureBoxLeft.CreateGraphics();
                 gLeft.Clear(Color.FromArgb(224, 224, 224));
 
-                // 鏡像の三角形（辺のみ）を描画
                 foreach (var triangle in triangles)
                 {
                     DrawMirrorTriangle(gLeft, triangle);
                 }
 
-                // 鏡像の頂点を描画
                 foreach (var vertex in vertices)
                 {
                     DrawMirrorVertex(gLeft, vertex);
@@ -430,78 +492,57 @@ namespace lowpoly_mask_builder
 
         private void PictureBoxRight_MouseWheel(object sender, MouseEventArgs e)
         {
-            // 頂点が選択されていないときは無視
             if (selectedVertex == null) return;
 
-            // ホイールの移動量（通常 120 の倍数）
             int delta = e.Delta;
-
-            // 感度調整：120（1ノッチ）で Z が 1～5 くらい動くとちょうど良い
-            int step = 3;  // お好みで 1～5 くらいに調整してください
-
-            // ホイール上 = 正、ホイール下 = 負
+            int step = 3;
             int change = (delta > 0) ? step : -step;
-
-            // 新しいZ値（範囲は 0 ～ 100 を想定？ 必要に応じて変更）
             int newZ = Math.Max(0, Math.Min(100, selectedVertex.Z + change));
 
-            // 頂点のZを更新
-            selectedVertex.Z = newZ;
-
-            // vScrollBarZ と完全に同期（これが重要！）
-            // あなたのコードでは vScrollBarZ.Value = Maximum - Z となっているので同じルールで
-            vScrollBarZ.Value = Math.Max(vScrollBarZ.Minimum,
-                                         Math.Min(vScrollBarZ.Maximum, vScrollBarZ.Maximum - newZ));
-
-            // NumericUpDown も同期
-            if (numericUpDownZ.Value != newZ)
+            if (selectedVertex.Z != newZ)
             {
-                numericUpDownZ.Value = newZ;
-            }
+                selectedVertex.Z = newZ;
 
-            // 再描画と更新
-            DrawMirrorImage();
-            RefreshPreview();
-            UpdateStatusLabel();
+                vScrollBarZ.Value = Math.Max(vScrollBarZ.Minimum,
+                                             Math.Min(vScrollBarZ.Maximum, vScrollBarZ.Maximum - newZ));
+
+                if (numericUpDownZ.Value != newZ)
+            	{
+                    numericUpDownZ.Value = newZ;
+            	}
+
+                DrawMirrorImage();
+                RefreshPreview();
+                UpdateStatusLabel();
+
+                SaveUndoState();
+            }
         }
 
         private void MergeVerticesAtSamePosition(Vertex primaryVertex)
         {
             List<int> indicesToOverwrite = new List<int>();
-
-            // primaryVertexと同じ座標を持つ他の頂点のインデックスを取得
             int primaryIndex = vertices.IndexOf(primaryVertex);
+
             for (int i = 0; i < vertices.Count; i++)
             {
                 if (i != primaryIndex && vertices[i].X == primaryVertex.X && vertices[i].Y == primaryVertex.Y)
                 {
                     indicesToOverwrite.Add(i);
-                }
+            	}
             }
 
             if (indicesToOverwrite.Count > 0)
             {
-                // 三角形の頂点インデックスをprimaryIndexに上書き
-                foreach (var triangle in triangles.ToList()) // ToList()でコピーを作成
+                foreach (var triangle in triangles.ToList())
                 {
-                    if (indicesToOverwrite.Contains(triangle.V1))
-                    {
-                        triangle.V1 = primaryIndex;
-                    }
-                    if (indicesToOverwrite.Contains(triangle.V2))
-                    {
-                        triangle.V2 = primaryIndex;
-                    }
-                    if (indicesToOverwrite.Contains(triangle.V3))
-                    {
-                        triangle.V3 = primaryIndex;
-                    }
+                    if (indicesToOverwrite.Contains(triangle.V1)) triangle.V1 = primaryIndex;
+                    if (indicesToOverwrite.Contains(triangle.V2)) triangle.V2 = primaryIndex;
+                    if (indicesToOverwrite.Contains(triangle.V3)) triangle.V3 = primaryIndex;
                 }
 
-                // 上書き後に、同一座標を持つ退化した三角形を削除
                 RemoveDegenerateTriangles();
 
-                // indicesToOverwriteの頂点を無効な座標に設定
                 foreach (int index in indicesToOverwrite)
                 {
                     vertices[index].X = -1;
@@ -517,55 +558,38 @@ namespace lowpoly_mask_builder
 
             foreach (var triangle in triangles)
             {
-                // 三角形の3つの頂点を取得
                 Vertex v1 = vertices[triangle.V1];
                 Vertex v2 = vertices[triangle.V2];
                 Vertex v3 = vertices[triangle.V3];
 
-                // 有効な頂点かどうかを確認（マージされた無効な頂点は除外）
                 if (v1.X == -1 || v2.X == -1 || v3.X == -1)
                 {
                     trianglesToRemove.Add(triangle);
                     continue;
                 }
 
-                // 2つ以上の頂点が同一座標かどうかをチェック
                 bool isDegenerate = false;
-
-                if (v1.X == v2.X && v1.Y == v2.Y)
-                {
-                    isDegenerate = true;
-                }
-                else if (v2.X == v3.X && v2.Y == v3.Y)
-                {
-                    isDegenerate = true;
-                }
-                else if (v3.X == v1.X && v3.Y == v1.Y)
-                {
-                    isDegenerate = true;
-                }
+                if (v1.X == v2.X && v1.Y == v2.Y) isDegenerate = true;
+                else if (v2.X == v3.X && v2.Y == v3.Y) isDegenerate = true;
+                else if (v3.X == v1.X && v3.Y == v1.Y) isDegenerate = true;
 
                 if (isDegenerate)
                 {
                     trianglesToRemove.Add(triangle);
-                }
+            	}
             }
 
-            // 退化した三角形を削除
             foreach (var triangleToRemove in trianglesToRemove)
             {
                 triangles.Remove(triangleToRemove);
-            }
+	        }
         }
-
-
 
         private void AddTriangleFromActiveEdge(Point mouseLocation)
         {
             int v1 = activeEdge.VertexIndex1;
             int v2 = activeEdge.VertexIndex2;
 
-            // ActiveEdgeの両端が鏡像境界（X=0）にあるかチェック
             if (vertices[v1].X == 0 && vertices[v2].X == 0)
             {
                 SplitMirrorBoundaryEdge();
@@ -584,7 +608,6 @@ namespace lowpoly_mask_builder
                 return;
             }
 
-            // 新しい頂点の追加
             Vertex worldPos = ScreenToWorld(mouseLocation);
             int newX = worldPos.X / GRID_SIZE * GRID_SIZE;
             int newY = worldPos.Y / GRID_SIZE * GRID_SIZE;
@@ -604,9 +627,7 @@ namespace lowpoly_mask_builder
                 vertices.Add(new Vertex(newX, newY));
             }
 
-            // activeEdgeが所属する三角形を探して、その接続順と逆順で新しい三角形を作成
             Triangle newTriangle = CreateTriangleWithCorrectOrientation(v1, v2, newVertexIndex, trianglesContainingEdge);
-
             triangles.Add(newTriangle);
         }
 
@@ -919,15 +940,20 @@ namespace lowpoly_mask_builder
         {
             if (selectedVertex != null)
             {
-                selectedVertex.Z = vScrollBarZ.Maximum - vScrollBarZ.Value;
-                DrawMirrorImage();
-                RefreshPreview();
-                UpdateStatusLabel();  // ステータスラベルを更新
-
-                // NumericUpDownの値も同期
-                if ((int)numericUpDownZ.Value != selectedVertex.Z)
+                int newZ = vScrollBarZ.Maximum - vScrollBarZ.Value;
+                if (selectedVertex.Z != newZ)
                 {
-                    numericUpDownZ.Value = selectedVertex.Z;
+                    selectedVertex.Z = newZ;
+                    DrawMirrorImage();
+                    RefreshPreview();
+                    UpdateStatusLabel();
+
+                    if ((int)numericUpDownZ.Value != newZ)
+                    {
+                        numericUpDownZ.Value = newZ;
+                    }
+
+                    SaveUndoState();
                 }
             }
         }
@@ -943,7 +969,6 @@ namespace lowpoly_mask_builder
         {
             public int VertexIndex1 { get; set; }
             public int VertexIndex2 { get; set; }
-
             public Edge(int v1, int v2)
             {
                 VertexIndex1 = v1;
@@ -965,15 +990,9 @@ namespace lowpoly_mask_builder
                         string jsonText = File.ReadAllText(openDialog.FileName);
                         var data = JsonConvert.DeserializeObject<MaskBuilderFileData>(jsonText);
 
-                        if (data == null)
+                        if (data == null || data.Application != "lowpoly_mask_builder_v1")
                         {
-                            MessageBox.Show("ファイルが正しく読み込めませんでした。ファイル形式が不正です。", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
-                        }
-
-                        if (data.Application != "lowpoly_mask_builder_v1")
-                        {
-                            MessageBox.Show("このファイルはLowpoly Mask Builderの保存形式と異なります。", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show("ファイル形式が不正です。", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             return;
                         }
 
@@ -993,13 +1012,15 @@ namespace lowpoly_mask_builder
                         currentFileName = openDialog.FileName;
                         this.Text = Path.GetFileName(currentFileName) + " - Lowpoly Mask Builder";
 
+                        SaveUndoState(); // 開いた状態もUNDO可能に
+
                         pictureBoxRight.Invalidate();
                         DrawMirrorImage();
                         RefreshPreview();
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"ファイルの読み込み中にエラーが発生しました。\n{ex.Message}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"読み込みエラー:\n{ex.Message}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -1074,14 +1095,16 @@ namespace lowpoly_mask_builder
                 if (selectedVertex.Z != newZValue)
                 {
                     selectedVertex.Z = newZValue;
-                    // スクロールバーの位置も同期
+
                     if (vScrollBarZ.Value != vScrollBarZ.Maximum - newZValue)
                     {
                         vScrollBarZ.Value = vScrollBarZ.Maximum - newZValue;
                     }
                     DrawMirrorImage();
-                    UpdateStatusLabel();  // ステータスラベルを更新
+                    UpdateStatusLabel();
                     RefreshPreview();
+
+                    SaveUndoState();
                 }
             }
         }
@@ -1651,7 +1674,6 @@ namespace lowpoly_mask_builder
                 }
             }
         }
-
         private void unifyTriangleToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (triangles.Count == 0)
@@ -1660,13 +1682,12 @@ namespace lowpoly_mask_builder
                 return;
             }
 
+            SaveUndoState(); // 変更前に保存
+
             HashSet<Triangle> processedTriangles = new HashSet<Triangle>();
             Queue<Triangle> triangleQueue = new Queue<Triangle>();
-
-            // 基準となる三角形をキューに追加
             triangleQueue.Enqueue(triangles[0]);
             processedTriangles.Add(triangles[0]);
-
             int flippedCount = 0;
 
             while (triangleQueue.Count > 0)
@@ -1675,12 +1696,10 @@ namespace lowpoly_mask_builder
 
                 foreach (var adjacentTriangle in triangles)
                 {
-                    if (processedTriangles.Contains(adjacentTriangle))
-                        continue;
+                    if (processedTriangles.Contains(adjacentTriangle)) continue;
 
                     if (HasSharedEdge(currentTriangle, adjacentTriangle))
                     {
-                        // 法線を使って向きが一致しているかを判定
                         if (!AreTriangleNormalsConsistent(currentTriangle, adjacentTriangle))
                         {
                             FlipTriangle(adjacentTriangle);
@@ -1701,7 +1720,6 @@ namespace lowpoly_mask_builder
                             "Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        // 二つの三角形が共有する辺を持つかどうかを判定（簡略化）
         private bool HasSharedEdge(Triangle triangle1, Triangle triangle2)
         {
             var edges1 = new[] { (triangle1.V1, triangle1.V2), (triangle1.V2, triangle1.V3), (triangle1.V3, triangle1.V1) };
@@ -1737,8 +1755,6 @@ namespace lowpoly_mask_builder
             // 内積が正であれば、同じ方向を向いている
             return dotProduct > 0.0f;
         }
-
-        // 三角形の頂点順序を反転させる
         private void FlipTriangle(Triangle triangle)
         {
             int temp = triangle.V1;
@@ -1754,19 +1770,17 @@ namespace lowpoly_mask_builder
                 return;
             }
 
-            int flippedCount = 0;
+            SaveUndoState();
 
-            // すべての三角形の頂点順序を反転させる
+            int flippedCount = 0;
             foreach (var triangle in triangles)
             {
-                // 頂点のインデックスを反転させる（V1, V2, V3 → V3, V2, V1）
                 int temp = triangle.V1;
                 triangle.V1 = triangle.V3;
                 triangle.V3 = temp;
                 flippedCount++;
             }
 
-            // 画面を更新
             pictureBoxRight.Invalidate();
             DrawMirrorImage();
             RefreshPreview();
@@ -1777,20 +1791,20 @@ namespace lowpoly_mask_builder
 
         private void previewToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // まだ作っていないときだけインスタンス化（2重起動防止）
             if (previewForm == null || previewForm.IsDisposed)
             {
                 previewForm = new FormPreview();
-                previewForm.Owner = this;                 // ← これが最重要！
-                previewForm.FormClosed += (s, args) => previewForm = null; // 閉じたら参照を破棄
+                previewForm.Owner = this;
+                previewForm.FormClosed += (s, args) => previewForm = null;
                 previewForm.UpdateModel(vertices, triangles);
-                previewForm.Show();                       // Show() で非モーダル表示
+                previewForm.Show();
             }
             else
             {
-                previewForm.BringToFront();               // すでに開いている場合は手前に出す
+                previewForm.BringToFront();
             }
         }
+
         private void RefreshPreview()
         {
             previewForm?.UpdateModel(vertices, triangles);
@@ -1802,20 +1816,21 @@ namespace lowpoly_mask_builder
             {
                 if (scaleForm.ShowDialog(this) == DialogResult.OK)
                 {
+                    SaveUndoState();
+
                     float sx = scaleForm.ScaleX / 100.0f;
                     float sy = scaleForm.ScaleY / 100.0f;
                     float sz = scaleForm.ScaleZ / 100.0f;
 
                     foreach (var v in vertices)
                     {
-                        if (v.X == -1 && v.Y == -1) continue; // 無効頂点はスキップ
+                        if (v.X == -1 && v.Y == -1) continue;
 
-                        v.X = Math.Min((int)(v.X * sx + 0.5f),WORLD_WIDTH);
-                        v.Y = Math.Min((int)(v.Y * sy + 0.5f), WORLD_HEIGHT);
-                        v.Z = Math.Min((int)(v.Z * sz + 0.5f), WORLD_DEPTH);
+                        v.X = Math.Max(0, Math.Min(WORLD_WIDTH, (int)(v.X * sx + 0.5f)));
+                        v.Y = Math.Max(0, Math.Min(WORLD_HEIGHT, (int)(v.Y * sy + 0.5f)));
+                        v.Z = Math.Max(0, Math.Min(WORLD_DEPTH, (int)(v.Z * sz + 0.5f)));
                     }
 
-                    // 再描画
                     pictureBoxRight.Invalidate();
                     DrawMirrorImage();
                     RefreshPreview();
@@ -1824,7 +1839,7 @@ namespace lowpoly_mask_builder
         }
     }
 
-
+    // 以下、クラス定義（変更なし）
     public class Vertex
     {
         public int X { get; set; }
@@ -1833,9 +1848,7 @@ namespace lowpoly_mask_builder
 
         public Vertex(int x, int y, int z = 0)
         {
-            X = x;
-            Y = y;
-            Z = z;
+            X = x; Y = y; Z = z;
         }
     }
 
@@ -1847,9 +1860,7 @@ namespace lowpoly_mask_builder
 
         public Triangle(int v1, int v2, int v3)
         {
-            V1 = v1;
-            V2 = v2;
-            V3 = v3;
+            V1 = v1; V2 = v2; V3 = v3;
         }
     }
 
@@ -1879,7 +1890,6 @@ namespace lowpoly_mask_builder
         public static Label Clone(this Label source)
         {
             Label lbl = new Label();
-
             lbl.AutoSize = source.AutoSize;
             lbl.Size = source.Size;
             lbl.Font = source.Font;
@@ -1891,9 +1901,7 @@ namespace lowpoly_mask_builder
             lbl.Margin = source.Margin;
             lbl.Visible = source.Visible;
             lbl.Enabled = source.Enabled;
-            lbl.Tag = source.Tag;           // 必要なら
-                                            // 必要に応じて他のプロパティも追加してください
-
+            lbl.Tag = source.Tag;
             return lbl;
         }
     }
