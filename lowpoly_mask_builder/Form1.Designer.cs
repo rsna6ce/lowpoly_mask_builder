@@ -67,12 +67,12 @@ namespace lowpoly_mask_builder
             // 
             // pictureBoxLeft
             // 
-            this.pictureBoxLeft.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.pictureBoxLeft.Location = new System.Drawing.Point(4, 28);
             this.pictureBoxLeft.Name = "pictureBoxLeft";
             this.pictureBoxLeft.Size = new System.Drawing.Size(600, 900);
             this.pictureBoxLeft.TabIndex = 0;
             this.pictureBoxLeft.TabStop = false;
+            this.pictureBoxLeft.Paint += new System.Windows.Forms.PaintEventHandler(this.pictureBoxLeft_Paint);
             // 
             // menuStrip1
             // 

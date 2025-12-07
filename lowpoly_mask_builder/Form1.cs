@@ -138,23 +138,63 @@ namespace lowpoly_mask_builder
             vertices.Clear();
             triangles.Clear();
 
-            vertices.Add(new Vertex(0, 0));
-            vertices.Add(new Vertex(100, 0));
-            vertices.Add(new Vertex(0, 100));
+            // 1. exeと同じフォルダにある new_data.lmb を探して読み込みを試みる
+            string exeDir = AppDomain.CurrentDomain.BaseDirectory;
+            string defaultFile = Path.Combine(exeDir, "new_data.lmb");
 
-            triangles.Add(new Triangle(0, 1, 2));
+            bool loaded = false;
 
+            if (File.Exists(defaultFile))
+            {
+                try
+                {
+                    string json = File.ReadAllText(defaultFile);
+                    var data = JsonConvert.DeserializeObject<MaskBuilderFileData>(json);
+
+                    if (data != null && data.Application == "lowpoly_mask_builder_v1")
+                    {
+                        foreach (var v in data.Vertices)
+                            vertices.Add(new Vertex(v.X, v.Y, v.Z));
+
+                        foreach (var t in data.Triangles)
+                            triangles.Add(new Triangle(t.V1, t.V2, t.V3));
+
+                        loaded = true;
+                    }
+                }
+                catch
+                {
+                    // 何もせずフォールバック（デバッグ中はコンソールに出してもOK）
+                    System.Diagnostics.Debug.WriteLine("new_data.lmb の読み込みに失敗しました。デフォルトモデルを使用します。");
+                }
+            }
+
+            // 2. 読み込めなかったら従来の三角形1枚を作成
+            if (!loaded)
+            {
+                vertices.Add(new Vertex(0, 0));
+                vertices.Add(new Vertex(100, 0));
+                vertices.Add(new Vertex(0, 100));
+                triangles.Add(new Triangle(0, 1, 2));
+            }
+
+            // 3. 共通の初期化
             selectedVertex = null;
             activeEdge = null;
             isAddingTriangle = false;
+            isDragging = false;
+            currentFileName = null;                    // 新規扱い
+            this.Text = "新規ファイル - Lowpoly Mask Builder";
 
-            undoStack.Clear(); // New のときはスタックもクリア
-            SaveUndoState();   // 初期状態をUNDO可能にしておく
+            pictureBoxRight.Invalidate();   // 右側を再描画
+            DrawMirrorImage();              // ← 左側（ミラー）も確実に描画
+            RefreshPreview();
 
-            pictureBoxRight.Invalidate();
+            undoStack.Clear();
+            SaveUndoState(); // 初期状態もUNDO可能に
         }
 
-        private void InitializeGridLabel()
+            private void InitializeGridLabel()
         {
             for (int n = 10; n <= 190; n += 10)
             {
@@ -463,9 +503,15 @@ namespace lowpoly_mask_builder
             }
         }
 
-        private void DrawMirrorImage()
+        private void DrawMirrorImage(Graphics g = null)
         {
             if (pictureBoxLeft == null) return;
+
+            if (pictureBoxLeft.Image != null)
+            {
+                pictureBoxLeft.Image.Dispose();
+                pictureBoxLeft.Image = null;
+            }
 
             if (heightMapCheckBox.Checked)
             {
@@ -473,7 +519,14 @@ namespace lowpoly_mask_builder
             }
             else
             {
-                Graphics gLeft = pictureBoxLeft.CreateGraphics();
+                Graphics gLeft = null;
+                if (g == null)
+                {
+                    gLeft = pictureBoxLeft.CreateGraphics();
+                } else
+                {
+                    gLeft = g;
+                }
                 gLeft.Clear(Color.FromArgb(224, 224, 224));
 
                 foreach (var triangle in triangles)
@@ -486,7 +539,9 @@ namespace lowpoly_mask_builder
                     DrawMirrorVertex(gLeft, vertex);
                 }
 
-                gLeft.Dispose();
+                if (g == null) {
+                    gLeft.Dispose(); 
+                }
             }
         }
 
@@ -1868,6 +1923,13 @@ namespace lowpoly_mask_builder
                     RefreshPreview();
                 }
             }
+        }
+
+        private void pictureBoxLeft_Paint(object sender, PaintEventArgs e)
+        {
+            
+            DrawMirrorImage(e.Graphics);
+            pictureBoxLeft.Paint -= pictureBoxLeft_Paint;
         }
     }
 
