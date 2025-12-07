@@ -551,7 +551,7 @@ namespace lowpoly_mask_builder
             if (selectedVertex == null) return;
 
             int delta = e.Delta;
-            int step = 3;
+            int step = 1;
             int change = (delta > 0) ? step : -step;
             int newZ = Math.Max(0, Math.Min(100, selectedVertex.Z + change));
 
