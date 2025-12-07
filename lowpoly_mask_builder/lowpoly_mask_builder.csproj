@@ -132,4 +132,10 @@
     <Content Include="moai_fill.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>if "$(Configuration)" == "Release" (
+    del "$(TargetDir)*.pdb" 2&gt;nul
+    del "$(TargetDir)$(TargetName).exe.config" 2&gt;nul
+)</PostBuildEvent>
+  </PropertyGroup>
 </Project>
