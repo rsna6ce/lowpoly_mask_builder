@@ -87,6 +87,7 @@ namespace lowpoly_mask_builder
         private const int POINT_RADIUS = 4;
         private const int EDGE_ACTIVE_DISTANCE = 8;
         private const int THICKNESS_MM = 2;
+        private const string APPLCATION_VERSION = " Ver.0.1";
 
         public Form1()
         {
@@ -184,7 +185,7 @@ namespace lowpoly_mask_builder
             isAddingTriangle = false;
             isDragging = false;
             currentFileName = null;                    // 新規扱い
-            this.Text = "新規ファイル - Lowpoly Mask Builder";
+            this.Text = "新規ファイル - Lowpoly Mask Builder" + APPLCATION_VERSION;
 
             pictureBoxRight.Invalidate();   // 右側を再描画
             DrawMirrorImage();              // ← 左側（ミラー）も確実に描画
@@ -1072,7 +1073,7 @@ namespace lowpoly_mask_builder
                         }
 
                         currentFileName = openDialog.FileName;
-                        this.Text = Path.GetFileName(currentFileName) + " - Lowpoly Mask Builder";
+                        this.Text = Path.GetFileName(currentFileName) + " - Lowpoly Mask Builder" + APPLCATION_VERSION;
 
                         SaveUndoState(); // 開いた状態もUNDO可能に
 
@@ -1104,7 +1105,7 @@ namespace lowpoly_mask_builder
                     {
                         SaveFile(saveDialog.FileName);
                         currentFileName = saveDialog.FileName;
-                        this.Text = Path.GetFileName(currentFileName) + " - Lowpoly Mask Builder";
+                        this.Text = Path.GetFileName(currentFileName) + " - Lowpoly Mask Builder" + APPLCATION_VERSION;
                     }
                     catch (Exception ex)
                     {
