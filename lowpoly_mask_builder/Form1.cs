@@ -669,6 +669,7 @@ namespace lowpoly_mask_builder
             Vertex worldPos = ScreenToWorld(mouseLocation);
             int newX = worldPos.X / GRID_SIZE * GRID_SIZE;
             int newY = worldPos.Y / GRID_SIZE * GRID_SIZE;
+            int newZ = (vertices[v1].Z + vertices[v2].Z) / 2;
             newX = Math.Max(0, Math.Min(WORLD_WIDTH, newX));
             newY = Math.Max(0, Math.Min(WORLD_HEIGHT, newY));
 
@@ -682,7 +683,7 @@ namespace lowpoly_mask_builder
             else
             {
                 newVertexIndex = vertices.Count;
-                vertices.Add(new Vertex(newX, newY));
+                vertices.Add(new Vertex(newX, newY, newZ));
             }
 
             Triangle newTriangle = CreateTriangleWithCorrectOrientation(v1, v2, newVertexIndex, trianglesContainingEdge);
@@ -707,7 +708,8 @@ namespace lowpoly_mask_builder
             {
                 // activeEdgeがこの三角形内で「v1→v2」の順序で接続されている場合、
                 // 新しい三角形でも同じ順序「v1→v2」を使用する
-                return new Triangle(v1, v2, newVertexIndex);
+                // というのはバグかもしれない？？？　暫定で2->1にしておく
+                return new Triangle(v2, v1, newVertexIndex);
             }
             else
             {
