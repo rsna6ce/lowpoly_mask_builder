@@ -529,7 +529,9 @@ namespace lowpoly_mask_builder
                 if (i != primaryIndex && vertices[i].X == primaryVertex.X && vertices[i].Y == primaryVertex.Y)
                 {
                     indicesToOverwrite.Add(i);
-            	}
+                    // 上書き予定の頂点のZをコピー
+                    primaryVertex.Z = vertices[i].Z;
+                }
             }
 
             if (indicesToOverwrite.Count > 0)
@@ -665,7 +667,7 @@ namespace lowpoly_mask_builder
             int v2 = activeEdge.VertexIndex2;
 
             // 中点の座標を計算（X座標は0のまま）
-            int midX = 0;  // 鏡像境界上なのでX=0
+            int midX = (vertices[v1].X + vertices[v2].X) / 2;
             int midY = (vertices[v1].Y + vertices[v2].Y) / 2;
             midY = midY / GRID_SIZE * GRID_SIZE;  // グリッドにスナップ
 
@@ -728,8 +730,10 @@ namespace lowpoly_mask_builder
             // 中点を作成
             int midX = (vertices[v1].X + vertices[v2].X) / 2;
             int midY = (vertices[v1].Y + vertices[v2].Y) / 2;
+            int midZ = (vertices[v1].Z + vertices[v2].Z) / 2;
             midX = midX / GRID_SIZE * GRID_SIZE;
             midY = midY / GRID_SIZE * GRID_SIZE;
+            midZ = midZ / GRID_SIZE * GRID_SIZE;
 
             Vertex existingMidpoint = vertices.FirstOrDefault(v => v.X == midX && v.Y == midY);
             int midpointIndex;
@@ -740,7 +744,7 @@ namespace lowpoly_mask_builder
             else
             {
                 midpointIndex = vertices.Count;
-                vertices.Add(new Vertex(midX, midY));
+                vertices.Add(new Vertex(midX, midY, midZ));
             }
 
             // 元の三角形を削除
