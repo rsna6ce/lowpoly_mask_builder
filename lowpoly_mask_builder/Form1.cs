@@ -724,7 +724,10 @@ namespace lowpoly_mask_builder
             // 中点の座標を計算（X座標は0のまま）
             int midX = (vertices[v1].X + vertices[v2].X) / 2;
             int midY = (vertices[v1].Y + vertices[v2].Y) / 2;
+            int midZ = (vertices[v1].Z + vertices[v2].Z) / 2;
             midY = midY / GRID_SIZE * GRID_SIZE;  // グリッドにスナップ
+            midZ = midZ / GRID_SIZE * GRID_SIZE;  // グリッドにスナップ
+
 
             // 中点が既存の頂点と重複しないかチェック
             Vertex existingMidpoint = vertices.FirstOrDefault(v => v.X == midX && v.Y == midY);
@@ -737,7 +740,7 @@ namespace lowpoly_mask_builder
             else
             {
                 midpointIndex = vertices.Count;
-                vertices.Add(new Vertex(midX, midY));
+                vertices.Add(new Vertex(midX, midY, midZ));
             }
 
             // このエッジを含む三角形を取得
