@@ -40,6 +40,7 @@ namespace lowpoly_mask_builder
             this.export2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.scaleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.moveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unifyTriangleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.flipAllTriangleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.optionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -52,7 +53,11 @@ namespace lowpoly_mask_builder
             this.numericUpDownZ = new System.Windows.Forms.NumericUpDown();
             this.labelX0 = new System.Windows.Forms.Label();
             this.labelY0 = new System.Windows.Forms.Label();
-            this.moveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
+            this.undoCtrlZToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripSeparator();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeft)).BeginInit();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRight)).BeginInit();
@@ -86,7 +91,9 @@ namespace lowpoly_mask_builder
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newToolStripMenuItem,
             this.openToolStripMenuItem,
+            this.toolStripMenuItem1,
             this.saveAsToolStripMenuItem,
+            this.toolStripMenuItem2,
             this.exportToolStripMenuItem,
             this.export2ToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
@@ -110,6 +117,7 @@ namespace lowpoly_mask_builder
             // saveAsToolStripMenuItem
             // 
             this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
+            this.saveAsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
             this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.saveAsToolStripMenuItem.Text = "Save as";
             this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
@@ -131,13 +139,16 @@ namespace lowpoly_mask_builder
             // toolsToolStripMenuItem
             // 
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.undoCtrlZToolStripMenuItem,
+            this.toolStripMenuItem3,
             this.scaleToolStripMenuItem,
             this.moveToolStripMenuItem,
+            this.toolStripMenuItem4,
             this.unifyTriangleToolStripMenuItem,
             this.flipAllTriangleToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
-            this.toolsToolStripMenuItem.Text = "Tools";
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
+            this.toolsToolStripMenuItem.Text = "Edit";
             // 
             // scaleToolStripMenuItem
             // 
@@ -145,6 +156,13 @@ namespace lowpoly_mask_builder
             this.scaleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.scaleToolStripMenuItem.Text = "Scale model";
             this.scaleToolStripMenuItem.Click += new System.EventHandler(this.scaleToolStripMenuItem_Click);
+            // 
+            // moveToolStripMenuItem
+            // 
+            this.moveToolStripMenuItem.Name = "moveToolStripMenuItem";
+            this.moveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.moveToolStripMenuItem.Text = "Move model";
+            this.moveToolStripMenuItem.Click += new System.EventHandler(this.moveToolStripMenuItem_Click);
             // 
             // unifyTriangleToolStripMenuItem
             // 
@@ -172,6 +190,7 @@ namespace lowpoly_mask_builder
             // transparentToolStripMenuItem
             // 
             this.transparentToolStripMenuItem.Name = "transparentToolStripMenuItem";
+            this.transparentToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.T)));
             this.transparentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.transparentToolStripMenuItem.Text = "Transparent";
             this.transparentToolStripMenuItem.Click += new System.EventHandler(this.transparentToolStripMenuItem_Click);
@@ -179,8 +198,9 @@ namespace lowpoly_mask_builder
             // previewToolStripMenuItem
             // 
             this.previewToolStripMenuItem.Name = "previewToolStripMenuItem";
+            this.previewToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.P)));
             this.previewToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.previewToolStripMenuItem.Text = "Preview";
+            this.previewToolStripMenuItem.Text = "Preview 3D";
             this.previewToolStripMenuItem.Click += new System.EventHandler(this.previewToolStripMenuItem_Click);
             // 
             // pictureBoxRight
@@ -248,12 +268,31 @@ namespace lowpoly_mask_builder
             this.labelY0.TabIndex = 6;
             this.labelY0.Text = "0";
             // 
-            // moveToolStripMenuItem
+            // toolStripMenuItem1
             // 
-            this.moveToolStripMenuItem.Name = "moveToolStripMenuItem";
-            this.moveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.moveToolStripMenuItem.Text = "Move model";
-            this.moveToolStripMenuItem.Click += new System.EventHandler(this.moveToolStripMenuItem_Click);
+            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(177, 6);
+            // 
+            // toolStripMenuItem2
+            // 
+            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(177, 6);
+            // 
+            // undoCtrlZToolStripMenuItem
+            // 
+            this.undoCtrlZToolStripMenuItem.Name = "undoCtrlZToolStripMenuItem";
+            this.undoCtrlZToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.undoCtrlZToolStripMenuItem.Text = "Undo (Ctrl+Z)";
+            // 
+            // toolStripMenuItem3
+            // 
+            this.toolStripMenuItem3.Name = "toolStripMenuItem3";
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(177, 6);
+            // 
+            // toolStripMenuItem4
+            // 
+            this.toolStripMenuItem4.Name = "toolStripMenuItem4";
+            this.toolStripMenuItem4.Size = new System.Drawing.Size(177, 6);
             // 
             // Form1
             // 
@@ -311,6 +350,11 @@ namespace lowpoly_mask_builder
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem scaleToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem moveToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
+        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
+        private System.Windows.Forms.ToolStripMenuItem undoCtrlZToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem3;
+        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem4;
     }
 }
 
