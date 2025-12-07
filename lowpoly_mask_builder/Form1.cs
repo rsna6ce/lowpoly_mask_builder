@@ -29,7 +29,7 @@ namespace lowpoly_mask_builder
         }
 
         private readonly List<ModelState> undoStack = new List<ModelState>();
-        private const int MaxUndoCount = 128;
+        private const int MaxUndoCount = 256;
 
         private void SaveUndoState()
         {
