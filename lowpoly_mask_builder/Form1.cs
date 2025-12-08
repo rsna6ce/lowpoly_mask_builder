@@ -1937,6 +1937,11 @@ namespace lowpoly_mask_builder
             DrawMirrorImage(e.Graphics);
             pictureBoxLeft.Paint -= pictureBoxLeft_Paint;
         }
+
+        private void undoCtrlZToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            PerformUndo();
+        }
     }
 
     // 以下、クラス定義（変更なし）
