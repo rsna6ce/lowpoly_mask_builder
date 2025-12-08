@@ -87,7 +87,7 @@ namespace lowpoly_mask_builder
         private const int POINT_RADIUS = 4;
         private const int EDGE_ACTIVE_DISTANCE = 8;
         private const int THICKNESS_MM = 2;
-        private const string APPLCATION_VERSION = " Ver.0.1";
+        private const string APPLCATION_VERSION = " Ver.0.2";
 
         public Form1()
         {
@@ -108,6 +108,54 @@ namespace lowpoly_mask_builder
                 PerformUndo();
                 e.Handled = true;
                 e.SuppressKeyPress = true;
+            }
+            else if (e.Shift && e.KeyCode == Keys.Delete)
+            {
+                DeleteTrianglesUnderMouse();
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+        }
+
+        private void DeleteTrianglesUnderMouse()
+        {
+            Point mousePos = pictureBoxRight.PointToClient(Cursor.Position);
+            if (!pictureBoxRight.ClientRectangle.Contains(mousePos))
+                return;
+
+            Vertex worldPoint = ScreenToWorld(mousePos);
+
+            // マウス位置にある三角形をすべて取得
+            var trianglesToDelete = triangles
+                .Where(t => IsPointInTriangle(worldPoint, t))
+                .ToList();
+
+            if (trianglesToDelete.Count == 0)
+                return;
+
+            string message = trianglesToDelete.Count == 1
+                ? "選択された三角形を削除しますか？"
+                : $"選択された {trianglesToDelete.Count} 個の三角形を削除しますか？";
+
+            if (MessageBox.Show(message, "三角形の削除", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                // Undo用に現在の状態を保存（削除前）
+                SaveUndoState();
+
+                // 削除実行
+                foreach (var tri in trianglesToDelete)
+                {
+                    triangles.Remove(tri);
+                }
+
+                // 退化三角形や不要頂点の後始末（必要に応じて）
+                RemoveDegenerateTriangles();
+                // （必要なら未使用頂点のクリーンアップもできるが、今は省略）
+
+                // 再描画
+                pictureBoxRight.Invalidate();
+                DrawMirrorImage();
+                RefreshPreview();
             }
         }
 
@@ -1941,6 +1989,15 @@ namespace lowpoly_mask_builder
         private void undoCtrlZToolStripMenuItem_Click(object sender, EventArgs e)
         {
             PerformUndo();
+        }
+
+        private void deleteTriangleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show(
+                "三角形を削除するには、マウスを三角形の上に乗せて、Shift＋Deleteキーを押してください。",
+                "Triangle Deletion",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
         }
     }
 
