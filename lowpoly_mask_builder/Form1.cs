@@ -1093,8 +1093,8 @@ namespace lowpoly_mask_builder
         {
             using (OpenFileDialog openDialog = new OpenFileDialog())
             {
-                openDialog.Filter = "Lowpoly Mask Builderファイル (*.lmb)|*.lmb|すべてのファイル (*.*)|*.*";
-                openDialog.Title = "ファイルを開く";
+                openDialog.Filter = "Lowpoly Mask Builder files (*.lmb)|*.lmb|All files (*.*)|*.*";
+                openDialog.Title = "Open File";
 
                 if (openDialog.ShowDialog() == DialogResult.OK)
                 {
@@ -1143,8 +1143,8 @@ namespace lowpoly_mask_builder
         {
             using (SaveFileDialog saveDialog = new SaveFileDialog())
             {
-                saveDialog.Filter = "Lowpoly Mask Builderファイル (*.lmb)|*.lmb";
-                saveDialog.Title = "名前を付けて保存";
+                saveDialog.Filter = "Lowpoly Mask Builder files (*.lmb)|*.lmb";
+                saveDialog.Title = "Save As";
 
                 string defaultFileName = GetDefaultFileName();
                 saveDialog.FileName = defaultFileName;
@@ -1356,8 +1356,8 @@ namespace lowpoly_mask_builder
         {
             using (SaveFileDialog saveDialog = new SaveFileDialog())
             {
-                saveDialog.Filter = "STLファイル (*.stl)|*.stl|すべてのファイル (*.*)|*.*";
-                saveDialog.Title = "STLファイルとしてエクスポート";
+                saveDialog.Filter = "STL files (*.stl)|*.stl|All files (*.*)|*.*";
+                saveDialog.Title = "Export as STL";
 
                 string defaultFileName = GetDefaultFileName();
                 // .lmbから.stlに拡張子を変更
@@ -1529,8 +1529,8 @@ namespace lowpoly_mask_builder
         {
             using (SaveFileDialog saveDialog = new SaveFileDialog())
             {
-                saveDialog.Filter = "STLファイル (*.stl)|*.stl|すべてのファイル (*.*)|*.*";
-                saveDialog.Title = "ボリュームSTLとしてエクスポート";
+                saveDialog.Filter = "STL files (*.stl)|*.stl|All files (*.*)|*.*";
+                saveDialog.Title = "Export as Volume STL";
 
                 string defaultFileName = GetDefaultFileName();
                 string stlFileName = Path.ChangeExtension(defaultFileName, "_volume.stl");
