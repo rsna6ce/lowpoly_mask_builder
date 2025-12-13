@@ -38,6 +38,14 @@ namespace lowpoly_mask_builder
 
             if (undoStack.Count > MaxUndoCount + 1)  // +1 が超重要！
                 undoStack.RemoveAt(0);
+
+            // 編集が発生したら未保存フラグを立てる
+            if (undoStack.Count > 1)
+            {
+                //undoStack.Count=1がアプリ起動後の初期モデル配置の状態
+                isModified = true;
+                UpdateTitle(); 
+            }
         }
 
         private void PerformUndo()
@@ -78,6 +86,7 @@ namespace lowpoly_mask_builder
         private Edge activeEdge = null;
         private bool isAddingTriangle = false;
         private string currentFileName = null;
+        private bool isModified = false;  // 編集フラグ（未保存状態かどうか）
 
         // 定数
         private const int GRID_SIZE = 1;
@@ -87,7 +96,7 @@ namespace lowpoly_mask_builder
         private const int POINT_RADIUS = 4;
         private const int EDGE_ACTIVE_DISTANCE = 8;
         private const int THICKNESS_MM = 2;
-        private const string APPLCATION_VERSION = " Ver.0.2";
+        private const string APPLCATION_VERSION = " Ver.0.3";
 
         public Form1()
         {
@@ -233,7 +242,7 @@ namespace lowpoly_mask_builder
             isAddingTriangle = false;
             isDragging = false;
             currentFileName = null;                    // 新規扱い
-            this.Text = "新規ファイル - Lowpoly Mask Builder" + APPLCATION_VERSION;
+            this.Text = "Untitled - Lowpoly Mask Builder" + APPLCATION_VERSION;
 
             pictureBoxRight.Invalidate();   // 右側を再描画
             DrawMirrorImage();              // ← 左側（ミラー）も確実に描画
@@ -1176,6 +1185,21 @@ namespace lowpoly_mask_builder
 
             string jsonText = JsonConvert.SerializeObject(data, Formatting.Indented);
             File.WriteAllText(fileName, jsonText);
+
+            // 保存成功したら未保存フラグをクリア
+            isModified = false;
+            UpdateTitle();
+        }
+
+        private void UpdateTitle()
+        {
+            string fileNamePart = string.IsNullOrEmpty(currentFileName)
+                ? "Untitled"
+                : Path.GetFileName(currentFileName);
+
+            string modifiedMark = isModified ? "*" : "";
+
+            this.Text = $"{fileNamePart}{modifiedMark} - Lowpoly Mask Builder{APPLCATION_VERSION}";
         }
 
         private string GetDefaultFileName()
@@ -1998,6 +2022,23 @@ namespace lowpoly_mask_builder
                 "Delete Triangle",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (isModified)
+            {
+                DialogResult result = MessageBox.Show(
+                    "You have unsaved changes. Do you want to close without saving?",
+                    "Unsaved Changes",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (result == DialogResult.No)
+                {
+                    e.Cancel = true;  // 閉じるのをキャンセル
+                }
+            }
         }
     }
 
