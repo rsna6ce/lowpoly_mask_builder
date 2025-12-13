@@ -134,10 +134,10 @@ namespace lowpoly_mask_builder
                 return;
 
             string message = trianglesToDelete.Count == 1
-                ? "選択された三角形を削除しますか？"
-                : $"選択された {trianglesToDelete.Count} 個の三角形を削除しますか？";
+                ? "Delete the selected triangle?"
+                : $"Delete the selected {trianglesToDelete.Count} triangles?";
 
-            if (MessageBox.Show(message, "三角形の削除", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            if (MessageBox.Show(message, "Delete Triangle(s)", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
                 // Undo用に現在の状態を保存（削除前）
                 SaveUndoState();
@@ -1105,7 +1105,7 @@ namespace lowpoly_mask_builder
 
                         if (data == null || data.Application != "lowpoly_mask_builder_v1")
                         {
-                            MessageBox.Show("ファイル形式が不正です。", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show("Invalid file format.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             return;
                         }
 
@@ -1133,7 +1133,7 @@ namespace lowpoly_mask_builder
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"読み込みエラー:\n{ex.Message}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Error loading file:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -1159,7 +1159,7 @@ namespace lowpoly_mask_builder
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"ファイルの保存中にエラーが発生しました。\n{ex.Message}", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Error saving file:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -1372,8 +1372,8 @@ namespace lowpoly_mask_builder
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"STLファイルのエクスポート中にエラーが発生しました。\n{ex.Message}",
-                            "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Error exporting STL file:\n{ex.Message}",
+                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -1544,8 +1544,8 @@ namespace lowpoly_mask_builder
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"エクスポート中にエラーが発生しました。\n{ex.Message}",
-                            "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Error during export:\n{ex.Message}",
+                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -1994,8 +1994,8 @@ namespace lowpoly_mask_builder
         private void deleteTriangleToolStripMenuItem_Click(object sender, EventArgs e)
         {
             MessageBox.Show(
-                "三角形を削除するには、マウスを三角形の上に乗せて、Shift＋Deleteキーを押してください。",
-                "Triangle Deletion",
+                "To delete a triangle, hover the mouse over it and press Shift + Delete.",
+                "Delete Triangle",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
         }
