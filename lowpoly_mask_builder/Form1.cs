@@ -1385,7 +1385,7 @@ namespace lowpoly_mask_builder
 
                 string defaultFileName = GetDefaultFileName();
                 // .lmbから.stlに拡張子を変更
-                string stlFileName = Path.ChangeExtension(defaultFileName, ".stl");
+                string stlFileName = Path.ChangeExtension(defaultFileName, "surface.stl");
                 saveDialog.FileName = stlFileName;
 
                 if (saveDialog.ShowDialog() == DialogResult.OK)
@@ -1557,7 +1557,7 @@ namespace lowpoly_mask_builder
                 saveDialog.Title = "Export as Volume STL";
 
                 string defaultFileName = GetDefaultFileName();
-                string stlFileName = Path.ChangeExtension(defaultFileName, "_volume.stl");
+                string stlFileName = Path.ChangeExtension(defaultFileName, "volume.stl");
                 saveDialog.FileName = stlFileName;
 
                 if (saveDialog.ShowDialog() == DialogResult.OK)
