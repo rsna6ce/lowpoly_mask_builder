@@ -136,6 +136,7 @@
     <PostBuildEvent>if "$(Configuration)" == "Release" (
     del "$(TargetDir)*.pdb" 2&gt;nul
     del "$(TargetDir)$(TargetName).exe.config" 2&gt;nul
-)</PostBuildEvent>
+)
+xcopy "$(SolutionDir)README.md" "$(TargetDir)" /Y /D</PostBuildEvent>
   </PropertyGroup>
 </Project>
