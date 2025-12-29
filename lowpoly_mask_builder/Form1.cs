@@ -159,12 +159,37 @@ namespace lowpoly_mask_builder
 
                 // 退化三角形や不要頂点の後始末（必要に応じて）
                 RemoveDegenerateTriangles();
-                // （必要なら未使用頂点のクリーンアップもできるが、今は省略）
+                // 未使用頂点のクリーンアップ
+                CleanupUnusedVertices();
 
                 // 再描画
                 pictureBoxRight.Invalidate();
                 DrawMirrorImage();
                 RefreshPreview();
+            }
+        }
+
+        private void CleanupUnusedVertices()
+        {
+            // 現在使用されている頂点インデックスのセットを作成
+            HashSet<int> usedIndices = new HashSet<int>();
+
+            foreach (var triangle in triangles)
+            {
+                usedIndices.Add(triangle.V1);
+                usedIndices.Add(triangle.V2);
+                usedIndices.Add(triangle.V3);
+            }
+
+            // すべての頂点を走査して、使われていないものを無効化
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                if (!usedIndices.Contains(i))
+                {
+                    vertices[i].X = -1;
+                    vertices[i].Y = -1;
+                    vertices[i].Z = -1;
+                }
             }
         }
 
