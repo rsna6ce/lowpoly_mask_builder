@@ -92,7 +92,7 @@ namespace lowpoly_mask_builder
         private const int GRID_SIZE = 1;
         private const int WORLD_WIDTH = 200;
         private const int WORLD_HEIGHT = 300;
-        private const int WORLD_DEPTH = 100;
+        private const int WORLD_DEPTH = 150;
         private const int POINT_RADIUS = 4;
         private const int EDGE_ACTIVE_DISTANCE = 8;
         private const int THICKNESS_MM = 2;
@@ -197,6 +197,8 @@ namespace lowpoly_mask_builder
         {
             InitializeGridLabel();
             pictureBoxRight.MouseEnter += (s, args) => pictureBoxRight.Focus();
+            trackBarZ.Maximum = WORLD_DEPTH;
+            numericUpDownZ.Maximum = WORLD_DEPTH;
         }
 
         private void InitializeHeightMapCheckBox()
@@ -635,7 +637,7 @@ namespace lowpoly_mask_builder
             int delta = e.Delta;
             int step = 1;
             int change = (delta > 0) ? step : -step;
-            int newZ = Math.Max(0, Math.Min(100, selectedVertex.Z + change));
+            int newZ = Math.Max(0, Math.Min(WORLD_DEPTH, selectedVertex.Z + change));
 
             if (selectedVertex.Z != newZ)
             {
