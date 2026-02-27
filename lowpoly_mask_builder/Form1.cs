@@ -493,7 +493,7 @@ namespace lowpoly_mask_builder
                 {
                     selectedVertex = nearestVertex;
                     isDragging = true;
-                    vScrollBarZ.Value = vScrollBarZ.Maximum - selectedVertex.Z;
+                    trackBarZ.Value = selectedVertex.Z;
                     numericUpDownZ.Value = selectedVertex.Z;
                     isAddingTriangle = false;
                     UpdateStatusLabel();
@@ -506,7 +506,7 @@ namespace lowpoly_mask_builder
                 {
                     selectedVertex = null;
                     isDragging = false;
-                    vScrollBarZ.Value = vScrollBarZ.Maximum;
+                    trackBarZ.Value = trackBarZ.Minimum;
                     numericUpDownZ.Value = 0;
                     UpdateStatusLabel();
                 }
@@ -641,9 +641,7 @@ namespace lowpoly_mask_builder
             {
                 selectedVertex.Z = newZ;
 
-                vScrollBarZ.Value = Math.Max(vScrollBarZ.Minimum,
-                                             Math.Min(vScrollBarZ.Maximum, vScrollBarZ.Maximum - newZ));
-
+                trackBarZ.Value = Math.Max(trackBarZ.Minimum, Math.Min(trackBarZ.Maximum, newZ));
                 if (numericUpDownZ.Value != newZ)
             	{
                     numericUpDownZ.Value = newZ;
@@ -1083,11 +1081,11 @@ namespace lowpoly_mask_builder
             return nearest;
         }
 
-        private void vScrollBarZ_Scroll(object sender, ScrollEventArgs e)
+        private void trackBarZ_Scroll(object sender, EventArgs e)
         {
             if (selectedVertex != null)
             {
-                int newZ = vScrollBarZ.Maximum - vScrollBarZ.Value;
+                int newZ = trackBarZ.Value;
                 if (selectedVertex.Z != newZ)
                 {
                     selectedVertex.Z = newZ;
@@ -1258,9 +1256,9 @@ namespace lowpoly_mask_builder
                 {
                     selectedVertex.Z = newZValue;
 
-                    if (vScrollBarZ.Value != vScrollBarZ.Maximum - newZValue)
+                    if (trackBarZ.Value != newZValue)
                     {
-                        vScrollBarZ.Value = vScrollBarZ.Maximum - newZValue;
+                        trackBarZ.Value = newZValue;
                     }
                     DrawMirrorImage();
                     UpdateStatusLabel();
