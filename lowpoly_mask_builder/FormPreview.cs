@@ -1,24 +1,21 @@
-﻿// FormPreview.cs（最終版：Glu不要・OpenTK 3.3.3 完全対応）
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
-
 namespace lowpoly_mask_builder
 {
     public partial class FormPreview : Form
     {
         private List<Vertex> vertices = new List<Vertex>();
-        private List<Triangle> triangles = new List<Triangle>();
-
-        private float zoom = 0.8f;
-        private float rotX = 0f;
-        private float rotY = 0f;
+        private List<Triangle> triangles = new List<Triangle>(); private float zoom = 0.8f;
+        private Quaternion rotation = Quaternion.Identity;
         private Point lastPos;
         private float panX = 0.0f;   // 左右移動
         private float panY = 0.0f;   // 上下移動
+        private Vector3 arcballStartVec;
+        private Quaternion startRotation;
 
         public FormPreview()
         {
@@ -92,10 +89,10 @@ namespace lowpoly_mask_builder
             // 1次元配列で渡す（列優先＝Column-major）
             float[] m = new float[16]
             {
-        f / aspect, 0.0f      , 0.0f                          ,  0.0f,
-        0.0f      , f         , 0.0f                          ,  0.0f,
-        0.0f      , 0.0f      , (zFar + zNear) / (zNear - zFar), -1.0f,
-        0.0f      , 0.0f      , (2.0f * zFar * zNear) / (zNear - zFar), 0.0f
+            f / aspect, 0.0f      , 0.0f                          ,  0.0f,
+            0.0f      , f         , 0.0f                          ,  0.0f,
+            0.0f      , 0.0f      , (zFar + zNear) / (zNear - zFar), -1.0f,
+            0.0f      , 0.0f      , (2.0f * zFar * zNear) / (zNear - zFar), 0.0f
             };
 
             GL.MultMatrix(m);  // これで完璧に通る
@@ -113,8 +110,8 @@ namespace lowpoly_mask_builder
 
             // カメラ操作
             GL.Translate(panX, panY, -500.0f * zoom);
-            GL.Rotate(rotX, 1.0f, 0.0f, 0.0f);        // まず真上から
-            GL.Rotate(rotY, 0.0f, 1.0f, 0.0f);        // その後左右に首を振る
+            Matrix4 rotMatrix = Matrix4.CreateFromQuaternion(rotation);
+            GL.MultMatrix(ref rotMatrix);
             GL.Translate(0.0f, -150.0f, 0.0f);     // モデル中心を原点に（Zも少し下げる）
 
             double bright = 0.6;
@@ -197,6 +194,24 @@ namespace lowpoly_mask_builder
             glControl1.SwapBuffers();
         }
 
+        private Vector3 GetArcballVector(int x, int y)
+        {
+            float px = 2.0f * (float)x / glControl1.Width - 1.0f;
+            float py = 1.0f - 2.0f * (float)y / glControl1.Height;
+            float len2 = px * px + py * py;
+            Vector3 p;
+            if (len2 <= 1.0f)
+            {
+                p = new Vector3(px, py, (float)Math.Sqrt(1.0f - len2));
+            }
+            else
+            {
+                float len = (float)Math.Sqrt(len2);
+                p = new Vector3(px / len, py / len, 0.0f);
+            }
+            return p;
+        }
+
         private void glControl1_MouseWheel(object sender, MouseEventArgs e)
         {
             zoom *= e.Delta > 0 ? 0.9f : 1.11f;
@@ -206,7 +221,12 @@ namespace lowpoly_mask_builder
 
         private void glControl1_MouseDown(object sender, MouseEventArgs e)
         {
-            lastPos = e.Location;  // 左右共通でOK
+            lastPos = e.Location;
+            if (e.Button == MouseButtons.Left)
+            {
+                arcballStartVec = GetArcballVector(e.X, e.Y);
+                startRotation = rotation;
+            }
             if (e.Button == MouseButtons.Left || e.Button == MouseButtons.Right)
             {
                 glControl1.Capture = true;  // マウスキャプチャ（ウィンドウ外でも追従）
@@ -217,12 +237,25 @@ namespace lowpoly_mask_builder
         {
             if (e.Button == MouseButtons.Left)
             {
-                // 左ドラッグ＝回転（今まで通り）
-                int dx = e.X - lastPos.X;
-                int dy = e.Y - lastPos.Y;
-                rotY += dx * 0.5f;
-                rotX += dy * 0.5f;
-                lastPos = e.Location;
+                Vector3 currVec = GetArcballVector(e.X, e.Y);
+                float dot = Vector3.Dot(arcballStartVec, currVec);
+                dot = Math.Max(-1.0f, Math.Min(1.0f, dot));
+                float angle = (float)Math.Acos(dot);
+                if (angle < 1e-6f) return;
+
+                Vector3 axis = Vector3.Cross(arcballStartVec, currVec);
+                axis.Normalize();
+
+                // 感度調整
+                angle *= 2.0f;
+
+                // 回転方向の調整（直感的でない場合、angle = -angle）
+                // angle = -angle; // 必要に応じて反転
+
+                Quaternion delta = Quaternion.FromAxisAngle(axis, angle);
+                rotation = delta * startRotation;
+                rotation.Normalize(); // 累積誤差防止
+
                 glControl1.Invalidate();
             }
             else if (e.Button == MouseButtons.Right)
@@ -263,3 +296,4 @@ namespace lowpoly_mask_builder
         }
     }
 }
+
