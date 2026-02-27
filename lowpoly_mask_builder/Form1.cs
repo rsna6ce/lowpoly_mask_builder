@@ -207,10 +207,10 @@ namespace lowpoly_mask_builder
             heightMapCheckBox.Text = "Hightmap mode  ";
             heightMapCheckBox.CheckedChanged += HeightMapCheckBox_CheckedChanged;
 
-            heightMapCheckBoxHost = new ToolStripControlHost(heightMapCheckBox);
-            heightMapCheckBoxHost.Alignment = ToolStripItemAlignment.Right;
+            //heightMapCheckBoxHost = new ToolStripControlHost(heightMapCheckBox);
+            //heightMapCheckBoxHost.Alignment = ToolStripItemAlignment.Right;
 
-            statusStrip1.Items.Add(heightMapCheckBoxHost);
+            //statusStrip1.Items.Add(heightMapCheckBoxHost);
         }
 
         private void HeightMapCheckBox_CheckedChanged(object sender, EventArgs e)
