@@ -95,7 +95,7 @@ namespace lowpoly_mask_builder
         private const int POINT_RADIUS = 4;
         private const int EDGE_ACTIVE_DISTANCE = 8;
         private const int THICKNESS_MM = 2;
-        private const string APPLCATION_VERSION = " Ver.0.3";
+        private const string APPLCATION_VERSION = " Ver.0.4";
 
         // ズーム関連
         private int zoomRate = 1;
@@ -2139,6 +2139,7 @@ namespace lowpoly_mask_builder
             int nextZoomRateAbs = -nextZoomRate;
             zoomRate = (0 < nextZoomRate) ? Math.Min(zoomRate * nextZoomRate, zoomRateMax) : Math.Max(1, zoomRate / nextZoomRateAbs);
             bool isZoomed = (1 < zoomRate);
+            zoomToolStripMenuItem.Checked = isZoomed;
 
             // 対象コントロール一覧
             var controls = new List<Control> { pictureBoxLeft, pictureBoxRight };

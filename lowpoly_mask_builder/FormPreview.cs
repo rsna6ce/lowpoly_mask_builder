@@ -290,9 +290,17 @@ namespace lowpoly_mask_builder
             foreach (var t in tList) triangles.Add(new Triangle(t.V1, t.V2, t.V3));
 
             if (glControl1.InvokeRequired)
-                glControl1.BeginInvoke((MethodInvoker)glControl1.Invalidate);
+            {
+                glControl1.BeginInvoke((MethodInvoker)(() =>
+                {
+                    glControl1.Invalidate();
+                    glControl1.Update();  // 追加で確実性UP
+                }));
+            }
             else
+            {
                 glControl1.Invalidate();
+            }
         }
     }
 }
