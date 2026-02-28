@@ -209,6 +209,7 @@ namespace lowpoly_mask_builder
             // labelX0, labelY0をリストに追加
             xAxisLabels.Add(labelX0);
             yAxisLabels.Add(labelY0);
+            LoadPreviewForm();
         }
 
         private void InitializeHeightMapCheckBox()
@@ -2001,6 +2002,10 @@ namespace lowpoly_mask_builder
         }
 
         private void previewToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            LoadPreviewForm();
+        }
+        private void LoadPreviewForm()
         {
             if (previewForm == null || previewForm.IsDisposed)
             {
