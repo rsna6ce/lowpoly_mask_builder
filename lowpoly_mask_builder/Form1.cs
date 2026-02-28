@@ -44,7 +44,7 @@ namespace lowpoly_mask_builder
             {
                 //undoStack.Count=1がアプリ起動後の初期モデル配置の状態
                 isModified = true;
-                UpdateTitle(); 
+                UpdateTitle();
             }
         }
 
@@ -75,7 +75,6 @@ namespace lowpoly_mask_builder
         }
         // ============================================================
 
-        private ToolStripControlHost heightMapCheckBoxHost;
         private CheckBox heightMapCheckBox;
         private FormPreview previewForm;
 
@@ -97,6 +96,12 @@ namespace lowpoly_mask_builder
         private const int EDGE_ACTIVE_DISTANCE = 8;
         private const int THICKNESS_MM = 2;
         private const string APPLCATION_VERSION = " Ver.0.3";
+
+        // ズーム関連
+        private int zoomRate = 1;
+        private const int zoomRateMax = 4;
+        private List<Label> xAxisLabels = new List<Label>();
+        private List<Label> yAxisLabels = new List<Label>();
 
         public Form1()
         {
@@ -199,6 +204,10 @@ namespace lowpoly_mask_builder
             pictureBoxRight.MouseEnter += (s, args) => pictureBoxRight.Focus();
             trackBarZ.Maximum = WORLD_DEPTH;
             numericUpDownZ.Maximum = WORLD_DEPTH;
+
+            // labelX0, labelY0をリストに追加
+            xAxisLabels.Add(labelX0);
+            yAxisLabels.Add(labelY0);
         }
 
         private void InitializeHeightMapCheckBox()
@@ -279,7 +288,7 @@ namespace lowpoly_mask_builder
             SaveUndoState(); // 初期状態もUNDO可能に
         }
 
-            private void InitializeGridLabel()
+        private void InitializeGridLabel()
         {
             for (int n = 10; n <= 190; n += 10)
             {
@@ -288,6 +297,8 @@ namespace lowpoly_mask_builder
                 lbl.Text = $"{n}";
                 lbl.Location = new Point(labelX0.Location.X + 3 * n, labelX0.Location.Y);
                 this.Controls.Add(lbl);
+                lbl.Parent = panelZoom;
+                xAxisLabels.Add(lbl);
             }
             for (int n = 10; n <= 290; n += 10)
             {
@@ -296,6 +307,8 @@ namespace lowpoly_mask_builder
                 lbl.Text = $"{n}";
                 lbl.Location = new Point(labelY0.Location.X, labelY0.Location.Y - 3 * n);
                 this.Controls.Add(lbl);
+                lbl.Parent = panelZoom;
+                yAxisLabels.Add(lbl);
             }
         }
 
@@ -386,11 +399,11 @@ namespace lowpoly_mask_builder
                 if (x % 10 == 0)
                 {
                     g.DrawLine(gridPen2, screenX, 0, screenX, pictureBoxRight.Height);
-                } 
+                }
                 else
                 {
                     g.DrawLine(gridPen, screenX, 0, screenX, pictureBoxRight.Height);
-            	}
+                }
             }
 
             for (int y = 0; y <= WORLD_HEIGHT; y += 2)
@@ -403,8 +416,8 @@ namespace lowpoly_mask_builder
                 else
                 {
                     g.DrawLine(gridPen, 0, screenY, pictureBoxRight.Width, screenY);
-            	}
-        	}
+                }
+            }
         }
 
         private void DrawTriangle(Graphics g, Triangle triangle)
@@ -553,7 +566,7 @@ namespace lowpoly_mask_builder
             else
             {
                 statusLabel1.Text = "vertex : ";
-        	}
+            }
         }
 
         private void pictureBoxRight_MouseUp(object sender, MouseEventArgs e)
@@ -608,7 +621,8 @@ namespace lowpoly_mask_builder
                 if (g == null)
                 {
                     gLeft = pictureBoxLeft.CreateGraphics();
-                } else
+                }
+                else
                 {
                     gLeft = g;
                 }
@@ -624,14 +638,23 @@ namespace lowpoly_mask_builder
                     DrawMirrorVertex(gLeft, vertex);
                 }
 
-                if (g == null) {
-                    gLeft.Dispose(); 
+                if (g == null)
+                {
+                    gLeft.Dispose();
                 }
             }
         }
 
         private void PictureBoxRight_MouseWheel(object sender, MouseEventArgs e)
         {
+            // Zoom mode
+            if ((Control.ModifierKeys & Keys.Control) == Keys.Control)
+            {
+                int nextZoomRate = (0 < e.Delta) ? 2 : -2;
+                SetZoomMode(nextZoomRate);
+                return;
+            }
+
             if (selectedVertex == null) return;
 
             int delta = e.Delta;
@@ -645,9 +668,9 @@ namespace lowpoly_mask_builder
 
                 trackBarZ.Value = Math.Max(trackBarZ.Minimum, Math.Min(trackBarZ.Maximum, newZ));
                 if (numericUpDownZ.Value != newZ)
-            	{
+                {
                     numericUpDownZ.Value = newZ;
-            	}
+                }
 
                 DrawMirrorImage();
                 RefreshPreview();
@@ -716,13 +739,13 @@ namespace lowpoly_mask_builder
                 if (isDegenerate)
                 {
                     trianglesToRemove.Add(triangle);
-            	}
+                }
             }
 
             foreach (var triangleToRemove in trianglesToRemove)
             {
                 triangles.Remove(triangleToRemove);
-	        }
+            }
         }
 
         private void AddTriangleFromActiveEdge(Point mouseLocation)
@@ -1568,7 +1591,8 @@ namespace lowpoly_mask_builder
             if (transparentToolStripMenuItem.Checked)
             {
                 this.TransparencyKey = Color.LightCyan;
-            } else
+            }
+            else
             {
                 this.TransparencyKey = Color.Empty;
             }
@@ -2030,7 +2054,7 @@ namespace lowpoly_mask_builder
 
         private void pictureBoxLeft_Paint(object sender, PaintEventArgs e)
         {
-            
+
             DrawMirrorImage(e.Graphics);
             pictureBoxLeft.Paint -= pictureBoxLeft_Paint;
         }
@@ -2064,6 +2088,88 @@ namespace lowpoly_mask_builder
                     e.Cancel = true;  // 閉じるのをキャンセル
                 }
             }
+        }
+
+        private void zoomToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            zoomToolStripMenuItem.Checked = !zoomToolStripMenuItem.Checked;
+            int nextZoomRate = zoomToolStripMenuItem.Checked ? 2 : -zoomRate;
+            SetZoomMode(nextZoomRate);
+        }
+
+        private void SetZoomMode(int nextZoomRate)
+        {
+            if ((0 < nextZoomRate && zoomRateMax <= zoomRate) || (nextZoomRate < 0 && zoomRate <= 1))
+            {
+                return;
+            }
+
+            int nextZoomRateAbs = -nextZoomRate;
+            zoomRate = (0 < nextZoomRate) ? Math.Min(zoomRate * nextZoomRate, zoomRateMax) : Math.Max(1, zoomRate / nextZoomRateAbs);
+            bool isZoomed = (1 < zoomRate);
+
+            // 対象コントロール一覧
+            var controls = new List<Control> { pictureBoxLeft, pictureBoxRight };
+            controls.AddRange(xAxisLabels);
+            controls.AddRange(yAxisLabels);
+
+            if (nextZoomRate > 0)
+            {
+                // Zoom Up
+                foreach (var ctrl in controls)
+                {
+                    ctrl.Location = new Point(ctrl.Location.X * nextZoomRate, ctrl.Location.Y * nextZoomRate);
+
+                    if (ctrl is PictureBox)
+                    {
+                        ctrl.Size = new Size(ctrl.Size.Width * nextZoomRate, ctrl.Size.Height * nextZoomRate);
+                    }
+                }
+                panelZoom.Size = new Size(panelZoom.Size.Width * nextZoomRate, panelZoom.Size.Height * nextZoomRate);
+            }
+            else
+            {
+                // Zoom Down
+                foreach (var ctrl in controls)
+                {
+                    ctrl.Location = new Point(ctrl.Location.X / nextZoomRateAbs, ctrl.Location.Y / nextZoomRateAbs);
+                    if (ctrl is PictureBox)
+                    {
+                        ctrl.Size = new Size(ctrl.Size.Width / nextZoomRateAbs, ctrl.Size.Height / nextZoomRateAbs);
+                    }
+                }
+                panelZoom.Size = new Size(panelZoom.Size.Width / nextZoomRateAbs, panelZoom.Size.Height / nextZoomRateAbs);
+            }
+
+            if (isZoomed)
+            {
+                hScrollBarZoom.Maximum = panelZoom.Width - panelParent.Width;
+                vScrollBarZoom.Maximum = panelZoom.Height - panelParent.Height;
+                hScrollBarZoom.Value = pictureBoxLeft.Width; //hScrollBarZoom.Maximum;
+                vScrollBarZoom.Value = vScrollBarZoom.Maximum / 2;
+                panelZoom.Top = -vScrollBarZoom.Value;
+                panelZoom.Left = -hScrollBarZoom.Value;
+            }
+            else
+            {
+                panelZoom.Location = new Point(0, 0);
+            }
+            hScrollBarZoom.Visible = isZoomed;
+            vScrollBarZoom.Visible = isZoomed;
+            pictureBoxRight.Invalidate();
+            DrawMirrorImage();
+        }
+
+        private void vScrollBarZoom_Scroll(object sender, ScrollEventArgs e)
+        {
+            panelZoom.Top = -vScrollBarZoom.Value;
+            DrawMirrorImage();
+        }
+
+        private void hScrollBarZoom_Scroll(object sender, ScrollEventArgs e)
+        {
+            panelZoom.Left = -hScrollBarZoom.Value;
+            DrawMirrorImage();
         }
     }
 
