@@ -237,6 +237,9 @@ namespace lowpoly_mask_builder
         {
             if (e.Button == MouseButtons.Left)
             {
+                // ファイルダイアログダブルクリックでマウスイベントをご検知する場合がある。
+                if (arcballStartVec == Vector3.Zero) {return; }
+
                 Vector3 currVec = GetArcballVector(e.X, e.Y);
                 float dot = Vector3.Dot(arcballStartVec, currVec);
                 dot = Math.Max(-1.0f, Math.Min(1.0f, dot));
@@ -291,11 +294,7 @@ namespace lowpoly_mask_builder
 
             if (glControl1.InvokeRequired)
             {
-                glControl1.BeginInvoke((MethodInvoker)(() =>
-                {
-                    glControl1.Invalidate();
-                    glControl1.Update();  // 追加で確実性UP
-                }));
+                glControl1.BeginInvoke((MethodInvoker)glControl1.Invalidate);
             }
             else
             {
