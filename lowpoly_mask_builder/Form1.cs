@@ -100,6 +100,7 @@ namespace lowpoly_mask_builder
         // ズーム関連
         private int zoomRate = 1;
         private const int zoomRateMax = 4;
+        private Point zoomDrugStartMouse = new Point(-1, -1);
         private List<Label> xAxisLabels = new List<Label>();
         private List<Label> yAxisLabels = new List<Label>();
 
@@ -527,34 +528,51 @@ namespace lowpoly_mask_builder
                 }
                 pictureBoxRight.Invalidate();
             }
+            else if (e.Button == MouseButtons.Right)
+            {
+                zoomDrugStartMouse = e.Location;
+            }
         }
 
         private void pictureBoxRight_MouseMove(object sender, MouseEventArgs e)
         {
-            if (isDragging && selectedVertex != null)
+            if (e.Button == MouseButtons.Right && zoomRate > 1 && zoomDrugStartMouse.X >= 0 && zoomDrugStartMouse.Y >= 0)
             {
-                Vertex worldPos = ScreenToWorld(e.Location);
-                int newX = worldPos.X / GRID_SIZE * GRID_SIZE;
-                int newY = worldPos.Y / GRID_SIZE * GRID_SIZE;
+                int deltaX = zoomDrugStartMouse.X - e.X;
+                int deltaY = zoomDrugStartMouse.Y - e.Y;
+                hScrollBarZoom.Value = Math.Max(0, Math.Min(hScrollBarZoom.Value + deltaX, hScrollBarZoom.Maximum));
+                vScrollBarZoom.Value = Math.Max(0, Math.Min(vScrollBarZoom.Value + deltaY, vScrollBarZoom.Maximum));
+                panelZoom.Top = -vScrollBarZoom.Value;
+                panelZoom.Left = -hScrollBarZoom.Value;
+                DrawMirrorImage();
+            }
+            else
+            {
+                if (isDragging && selectedVertex != null)
+                {
+                    Vertex worldPos = ScreenToWorld(e.Location);
+                    int newX = worldPos.X / GRID_SIZE * GRID_SIZE;
+                    int newY = worldPos.Y / GRID_SIZE * GRID_SIZE;
 
-                newX = Math.Max(0, Math.Min(WORLD_WIDTH, newX));
-                newY = Math.Max(0, Math.Min(WORLD_HEIGHT, newY));
+                    newX = Math.Max(0, Math.Min(WORLD_WIDTH, newX));
+                    newY = Math.Max(0, Math.Min(WORLD_HEIGHT, newY));
 
-                selectedVertex.X = newX;
-                selectedVertex.Y = newY;
+                    selectedVertex.X = newX;
+                    selectedVertex.Y = newY;
 
-                UpdateStatusLabel();
+                    UpdateStatusLabel();
+                    pictureBoxRight.Invalidate();
+                }
+                else if (!isAddingTriangle)
+                {
+                    Edge nearestEdge = FindNearestEdgeMiddle(e.Location, EDGE_ACTIVE_DISTANCE * Math.Max(pictureBoxRight.Size.Width / WORLD_WIDTH, pictureBoxRight.Size.Height / WORLD_HEIGHT));
+                    if (nearestEdge != activeEdge)
+                    {
+                        activeEdge = nearestEdge;
+                    }
+                }
                 pictureBoxRight.Invalidate();
             }
-            else if (!isAddingTriangle)
-            {
-                Edge nearestEdge = FindNearestEdgeMiddle(e.Location, EDGE_ACTIVE_DISTANCE * Math.Max(pictureBoxRight.Size.Width / WORLD_WIDTH, pictureBoxRight.Size.Height / WORLD_HEIGHT));
-                if (nearestEdge != activeEdge)
-                {
-                    activeEdge = nearestEdge;
-                }
-            }
-            pictureBoxRight.Invalidate();
         }
 
         private void UpdateStatusLabel()
@@ -571,33 +589,40 @@ namespace lowpoly_mask_builder
 
         private void pictureBoxRight_MouseUp(object sender, MouseEventArgs e)
         {
-            bool modelChanged = false;
-
-            if (isAddingTriangle && activeEdge != null)
+            if (e.Button == MouseButtons.Left)
             {
-                AddTriangleFromActiveEdge(e.Location);
-                modelChanged = true;
+                bool modelChanged = false;
+
+                if (isAddingTriangle && activeEdge != null)
+                {
+                    AddTriangleFromActiveEdge(e.Location);
+                    modelChanged = true;
+                }
+
+                if (isDragging && selectedVertex != null)
+                {
+                    MergeVerticesAtSamePosition(selectedVertex);
+                    modelChanged = true;
+                }
+
+                DrawMirrorImage();
+
+                activeEdge = null;
+                isAddingTriangle = false;
+                isDragging = false;
+
+                UpdateStatusLabel();
+                RefreshPreview();
+                pictureBoxRight.Invalidate();
+
+                if (modelChanged)
+                {
+                    SaveUndoState();
+                }
             }
-
-            if (isDragging && selectedVertex != null)
+            else if (e.Button == MouseButtons.Right)
             {
-                MergeVerticesAtSamePosition(selectedVertex);
-                modelChanged = true;
-            }
-
-            DrawMirrorImage();
-
-            activeEdge = null;
-            isAddingTriangle = false;
-            isDragging = false;
-
-            UpdateStatusLabel();
-            RefreshPreview();
-            pictureBoxRight.Invalidate();
-
-            if (modelChanged)
-            {
-                SaveUndoState();
+                zoomDrugStartMouse = new Point(-1, -1);
             }
         }
 
@@ -2145,7 +2170,7 @@ namespace lowpoly_mask_builder
             {
                 hScrollBarZoom.Maximum = panelZoom.Width - panelParent.Width;
                 vScrollBarZoom.Maximum = panelZoom.Height - panelParent.Height;
-                hScrollBarZoom.Value = pictureBoxLeft.Width; //hScrollBarZoom.Maximum;
+                hScrollBarZoom.Value = pictureBoxLeft.Width;
                 vScrollBarZoom.Value = vScrollBarZoom.Maximum / 2;
                 panelZoom.Top = -vScrollBarZoom.Value;
                 panelZoom.Left = -hScrollBarZoom.Value;
