@@ -529,9 +529,10 @@ namespace lowpoly_mask_builder
                 }
                 pictureBoxRight.Invalidate();
             }
-            else if (e.Button == MouseButtons.Right)
+            else if (e.Button == MouseButtons.Right && zoomRate > 1)
             {
                 zoomDrugStartMouse = e.Location;
+                pictureBoxRight.Cursor = System.Windows.Forms.Cursors.NoMove2D;
             }
         }
 
@@ -621,9 +622,10 @@ namespace lowpoly_mask_builder
                     SaveUndoState();
                 }
             }
-            else if (e.Button == MouseButtons.Right)
+            else if (e.Button == MouseButtons.Right && zoomRate > 1)
             {
                 zoomDrugStartMouse = new Point(-1, -1);
+                pictureBoxRight.Cursor = System.Windows.Forms.Cursors.Default;
             }
         }
 
