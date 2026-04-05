@@ -64,6 +64,8 @@ namespace lowpoly_mask_builder
             this.panelParent = new System.Windows.Forms.Panel();
             this.vScrollBarZoom = new System.Windows.Forms.VScrollBar();
             this.hScrollBarZoom = new System.Windows.Forms.HScrollBar();
+            this.sampleModelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.oneTriangleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLeft)).BeginInit();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxRight)).BeginInit();
@@ -111,47 +113,50 @@ namespace lowpoly_mask_builder
             // 
             // newToolStripMenuItem
             // 
+            this.newToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.sampleModelToolStripMenuItem,
+            this.oneTriangleToolStripMenuItem});
             this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-            this.newToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.newToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.newToolStripMenuItem.Text = "New";
             this.newToolStripMenuItem.Click += new System.EventHandler(this.newToolStripMenuItem_Click);
             // 
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
             // toolStripMenuItem1
             // 
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(168, 6);
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(177, 6);
             // 
             // saveAsToolStripMenuItem
             // 
             this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
             this.saveAsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.saveAsToolStripMenuItem.Text = "Save as";
             this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(168, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(177, 6);
             // 
             // exportToolStripMenuItem
             // 
             this.exportToolStripMenuItem.Name = "exportToolStripMenuItem";
-            this.exportToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.exportToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.exportToolStripMenuItem.Text = "Export Surface STL";
             this.exportToolStripMenuItem.Click += new System.EventHandler(this.exportToolStripMenuItem_Click);
             // 
             // export2ToolStripMenuItem
             // 
             this.export2ToolStripMenuItem.Name = "export2ToolStripMenuItem";
-            this.export2ToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
+            this.export2ToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.export2ToolStripMenuItem.Text = "Export Volume STL";
             this.export2ToolStripMenuItem.Click += new System.EventHandler(this.export2ToolStripMenuItem_Click);
             // 
@@ -236,7 +241,7 @@ namespace lowpoly_mask_builder
             // 
             this.transparentToolStripMenuItem.Name = "transparentToolStripMenuItem";
             this.transparentToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.T)));
-            this.transparentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.transparentToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
             this.transparentToolStripMenuItem.Text = "Transparent";
             this.transparentToolStripMenuItem.Click += new System.EventHandler(this.transparentToolStripMenuItem_Click);
             // 
@@ -244,14 +249,14 @@ namespace lowpoly_mask_builder
             // 
             this.previewToolStripMenuItem.Name = "previewToolStripMenuItem";
             this.previewToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.P)));
-            this.previewToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.previewToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
             this.previewToolStripMenuItem.Text = "Preview 3D";
             this.previewToolStripMenuItem.Click += new System.EventHandler(this.previewToolStripMenuItem_Click);
             // 
             // zoomToolStripMenuItem
             // 
             this.zoomToolStripMenuItem.Name = "zoomToolStripMenuItem";
-            this.zoomToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.zoomToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
             this.zoomToolStripMenuItem.Text = "Zoom (Ctrl+Wheel)";
             this.zoomToolStripMenuItem.Click += new System.EventHandler(this.zoomToolStripMenuItem_Click);
             // 
@@ -358,6 +363,20 @@ namespace lowpoly_mask_builder
             this.hScrollBarZoom.Visible = false;
             this.hScrollBarZoom.Scroll += new System.Windows.Forms.ScrollEventHandler(this.hScrollBarZoom_Scroll);
             // 
+            // sampleModelToolStripMenuItem
+            // 
+            this.sampleModelToolStripMenuItem.Name = "sampleModelToolStripMenuItem";
+            this.sampleModelToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.sampleModelToolStripMenuItem.Text = "sample model";
+            this.sampleModelToolStripMenuItem.Click += new System.EventHandler(this.sampleModelToolStripMenuItem_Click);
+            // 
+            // oneTriangleToolStripMenuItem
+            // 
+            this.oneTriangleToolStripMenuItem.Name = "oneTriangleToolStripMenuItem";
+            this.oneTriangleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.oneTriangleToolStripMenuItem.Text = "one triangle";
+            this.oneTriangleToolStripMenuItem.Click += new System.EventHandler(this.oneTriangleToolStripMenuItem_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -429,6 +448,8 @@ namespace lowpoly_mask_builder
         private System.Windows.Forms.Panel panelParent;
         private System.Windows.Forms.VScrollBar vScrollBarZoom;
         private System.Windows.Forms.HScrollBar hScrollBarZoom;
+        private System.Windows.Forms.ToolStripMenuItem sampleModelToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem oneTriangleToolStripMenuItem;
     }
 }
 

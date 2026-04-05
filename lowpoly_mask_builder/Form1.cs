@@ -95,7 +95,7 @@ namespace lowpoly_mask_builder
         private const int POINT_RADIUS = 4;
         private const int EDGE_ACTIVE_DISTANCE = 8;
         private const int THICKNESS_MM = 2;
-        private const string APPLCATION_VERSION = " Ver.0.4";
+        private const string APPLCATION_VERSION = " Ver.0.5";
 
         // ズーム関連
         private int zoomRate = 1;
@@ -229,14 +229,14 @@ namespace lowpoly_mask_builder
             DrawMirrorImage();
         }
 
-        private void InitializeModel()
+        private void InitializeModel(string newfilename = "new_data.lmb")
         {
             vertices.Clear();
             triangles.Clear();
 
             // 1. exeと同じフォルダにある new_data.lmb を探して読み込みを試みる
             string exeDir = AppDomain.CurrentDomain.BaseDirectory;
-            string defaultFile = Path.Combine(exeDir, "new_data.lmb");
+            string defaultFile = Path.Combine(exeDir, newfilename);
 
             bool loaded = false;
 
@@ -1158,9 +1158,9 @@ namespace lowpoly_mask_builder
 
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            InitializeModel();
-            DrawMirrorImage();
-            RefreshPreview();
+        //    InitializeModel();
+        //    DrawMirrorImage();
+        //    RefreshPreview();
         }
 
         private class Edge
@@ -2203,6 +2203,20 @@ namespace lowpoly_mask_builder
         {
             panelZoom.Left = -hScrollBarZoom.Value;
             DrawMirrorImage();
+        }
+
+        private void sampleModelToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            InitializeModel();
+            DrawMirrorImage();
+            RefreshPreview();
+        }
+
+        private void oneTriangleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            InitializeModel("one_triangle.lmb");
+            DrawMirrorImage();
+            RefreshPreview();
         }
     }
 
