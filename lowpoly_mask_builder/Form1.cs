@@ -75,7 +75,6 @@ namespace lowpoly_mask_builder
         }
         // ============================================================
 
-        private CheckBox heightMapCheckBox;
         private FormPreview previewForm;
 
         private List<Vertex> vertices = new List<Vertex>();
@@ -112,7 +111,6 @@ namespace lowpoly_mask_builder
             _initialFilePath = initialFile;
 
             InitializeComponent();
-            InitializeHeightMapCheckBox();
             InitializeModel();
             pictureBoxRight.MouseWheel += PictureBoxRight_MouseWheel;
 
@@ -228,23 +226,6 @@ namespace lowpoly_mask_builder
                         "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-        }
-
-        private void InitializeHeightMapCheckBox()
-        {
-            heightMapCheckBox = new CheckBox();
-            heightMapCheckBox.Text = "Hightmap mode  ";
-            heightMapCheckBox.CheckedChanged += HeightMapCheckBox_CheckedChanged;
-
-            //heightMapCheckBoxHost = new ToolStripControlHost(heightMapCheckBox);
-            //heightMapCheckBoxHost.Alignment = ToolStripItemAlignment.Right;
-
-            //statusStrip1.Items.Add(heightMapCheckBoxHost);
-        }
-
-        private void HeightMapCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            DrawMirrorImage();
         }
 
         private void InitializeModel(string newfilename = "new_data.lmb")
@@ -656,38 +637,31 @@ namespace lowpoly_mask_builder
                 pictureBoxLeft.Image.Dispose();
                 pictureBoxLeft.Image = null;
             }
-
-            if (heightMapCheckBox.Checked)
+            
+            Graphics gLeft = null;
+            if (g == null)
             {
-                GenerateAndDisplayHeightMap();
+                gLeft = pictureBoxLeft.CreateGraphics();
             }
             else
             {
-                Graphics gLeft = null;
-                if (g == null)
-                {
-                    gLeft = pictureBoxLeft.CreateGraphics();
-                }
-                else
-                {
-                    gLeft = g;
-                }
-                gLeft.Clear(Color.FromArgb(224, 224, 224));
+                gLeft = g;
+            }
+            gLeft.Clear(Color.FromArgb(224, 224, 224));
 
-                foreach (var triangle in triangles)
-                {
-                    DrawMirrorTriangle(gLeft, triangle);
-                }
+            foreach (var triangle in triangles)
+            {
+                DrawMirrorTriangle(gLeft, triangle);
+            }
 
-                foreach (var vertex in vertices)
-                {
-                    DrawMirrorVertex(gLeft, vertex);
-                }
+            foreach (var vertex in vertices)
+            {
+                DrawMirrorVertex(gLeft, vertex);
+            }
 
-                if (g == null)
-                {
-                    gLeft.Dispose();
-                }
+            if (g == null)
+            {
+                gLeft.Dispose();
             }
         }
 
@@ -1343,73 +1317,6 @@ namespace lowpoly_mask_builder
                     SaveUndoState();
                 }
             }
-        }
-
-        private void GenerateAndDisplayHeightMap()
-        {
-            if (pictureBoxLeft == null) return;
-
-            int width = pictureBoxLeft.Width;
-            int height = pictureBoxLeft.Height;
-
-            Bitmap heightMap = new Bitmap(width, height);
-
-            BitmapData bitmapData = heightMap.LockBits(
-                new Rectangle(0, 0, width, height),
-                ImageLockMode.WriteOnly,
-                PixelFormat.Format24bppRgb);
-
-            try
-            {
-                unsafe
-                {
-                    Parallel.For(0, height, y =>
-                    {
-                        byte* basePtr = (byte*)bitmapData.Scan0 + y * bitmapData.Stride;
-
-                        for (int x = 0; x < width; x++)
-                        {
-                            int mirroredScreenX = width - x;
-                            Vertex worldPoint = ScreenToWorld(new Point(mirroredScreenX, y));
-
-                            float interpolatedZ = 0.0f;
-                            bool insideAnyTriangle = false;
-
-                            foreach (var triangle in triangles)
-                            {
-                                if (IsPointInTriangle(worldPoint, triangle))
-                                {
-                                    interpolatedZ = InterpolateZInTriangle(worldPoint, triangle);
-                                    insideAnyTriangle = true;
-                                    break;
-                                }
-                            }
-
-                            int grayValue;
-                            if (insideAnyTriangle)
-                            {
-                                grayValue = (int)((interpolatedZ / 100.0f) * 255.0f);
-                                grayValue = Math.Max(0, Math.Min(255, grayValue));
-                            }
-                            else
-                            {
-                                grayValue = 0;
-                            }
-
-                            int pixelIndex = x * 3;
-                            basePtr[pixelIndex] = (byte)grayValue;     // Blue
-                            basePtr[pixelIndex + 1] = (byte)grayValue; // Green
-                            basePtr[pixelIndex + 2] = (byte)grayValue; // Red
-                        }
-                    });
-                }
-            }
-            finally
-            {
-                heightMap.UnlockBits(bitmapData);
-            }
-
-            pictureBoxLeft.Image = heightMap;
         }
 
         // 指定された点が三角形内にあるかどうかを判定
