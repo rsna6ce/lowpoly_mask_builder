@@ -95,7 +95,7 @@ namespace lowpoly_mask_builder
         private const int POINT_RADIUS = 4;
         private const int EDGE_ACTIVE_DISTANCE = 8;
         private const int THICKNESS_MM = 2;
-        private const string APPLCATION_VERSION = " Ver.0.5";
+        private const string APPLCATION_VERSION = " Ver.0.6";
 
         // ズーム関連
         private int zoomRate = 1;
@@ -104,8 +104,13 @@ namespace lowpoly_mask_builder
         private List<Label> xAxisLabels = new List<Label>();
         private List<Label> yAxisLabels = new List<Label>();
 
-        public Form1()
+        // コマンドライン引数ファイル
+        private string _initialFilePath = null;
+
+        public Form1(string initialFile = null)
         {
+            _initialFilePath = initialFile;
+
             InitializeComponent();
             InitializeHeightMapCheckBox();
             InitializeModel();
@@ -210,6 +215,19 @@ namespace lowpoly_mask_builder
             xAxisLabels.Add(labelX0);
             yAxisLabels.Add(labelY0);
             LoadPreviewForm();
+
+            if (!string.IsNullOrEmpty(_initialFilePath))
+            {
+                try
+                {
+                    OpenLmbFile(_initialFilePath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"ファイルを開けませんでした：\n{ex.Message}",
+                        "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
         private void InitializeHeightMapCheckBox()
@@ -1183,44 +1201,49 @@ namespace lowpoly_mask_builder
 
                 if (openDialog.ShowDialog() == DialogResult.OK)
                 {
-                    try
-                    {
-                        string jsonText = File.ReadAllText(openDialog.FileName);
-                        var data = JsonConvert.DeserializeObject<MaskBuilderFileData>(jsonText);
-
-                        if (data == null || data.Application != "lowpoly_mask_builder_v1")
-                        {
-                            MessageBox.Show("Invalid file format.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
-                        }
-
-                        vertices.Clear();
-                        triangles.Clear();
-
-                        foreach (var vertexData in data.Vertices)
-                        {
-                            vertices.Add(new Vertex(vertexData.X, vertexData.Y, vertexData.Z));
-                        }
-
-                        foreach (var triangleData in data.Triangles)
-                        {
-                            triangles.Add(new Triangle(triangleData.V1, triangleData.V2, triangleData.V3));
-                        }
-
-                        currentFileName = openDialog.FileName;
-                        this.Text = Path.GetFileName(currentFileName) + " - Lowpoly Mask Builder" + APPLCATION_VERSION;
-
-                        SaveUndoState(); // 開いた状態もUNDO可能に
-
-                        pictureBoxRight.Invalidate();
-                        DrawMirrorImage();
-                        RefreshPreview();
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Error loading file:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    OpenLmbFile(openDialog.FileName);
                 }
+            }
+        }
+
+        private void OpenLmbFile(string filename)
+        {
+            try
+            {
+                string jsonText = File.ReadAllText(filename);
+                var data = JsonConvert.DeserializeObject<MaskBuilderFileData>(jsonText);
+
+                if (data == null || data.Application != "lowpoly_mask_builder_v1")
+                {
+                    MessageBox.Show("Invalid file format.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                vertices.Clear();
+                triangles.Clear();
+
+                foreach (var vertexData in data.Vertices)
+                {
+                    vertices.Add(new Vertex(vertexData.X, vertexData.Y, vertexData.Z));
+                }
+
+                foreach (var triangleData in data.Triangles)
+                {
+                    triangles.Add(new Triangle(triangleData.V1, triangleData.V2, triangleData.V3));
+                }
+
+                currentFileName = filename;
+                this.Text = Path.GetFileName(currentFileName) + " - Lowpoly Mask Builder" + APPLCATION_VERSION;
+
+                SaveUndoState(); // 開いた状態もUNDO可能に
+
+                pictureBoxRight.Invalidate();
+                DrawMirrorImage();
+                RefreshPreview();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading file:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
