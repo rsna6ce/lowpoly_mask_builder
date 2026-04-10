@@ -2148,6 +2148,88 @@ namespace lowpoly_mask_builder
             DrawMirrorImage();
             RefreshPreview();
         }
+
+        private void testModeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            bool isShiftPressed = (Control.ModifierKeys & Keys.Shift) == Keys.Shift;
+            if (!isShiftPressed)
+            {
+                return;
+            }
+
+            if (!timerTestmode.Enabled)
+            {
+                //キャプチャ用に初回だけ遅延
+                timerTestmode.Interval = 3000;
+            }
+            timerTestmode.Enabled = !timerTestmode.Enabled;
+        }
+
+        private void timerTestmode_Tick(object sender, EventArgs e)
+        {
+            // 有効頂点（X,Y >= 0）のインデックスだけ抽出
+            var validIndices = Enumerable.Range(0, vertices.Count)
+                .Where(i => vertices[i].X >= 0 && vertices[i].Y >= 0)
+                .ToList();
+
+            if (validIndices.Count == 0)
+            {
+                timerTestmode.Enabled = false;
+                return;
+            }
+
+            // XY平面での原点からのユークリッド距離（二乗で比較）の昇順にソート
+            validIndices.Sort((a, b) =>
+            {
+                long distA = (long)vertices[a].X * vertices[a].X + (long)vertices[a].Y * vertices[a].Y;
+                long distB = (long)vertices[b].X * vertices[b].X + (long)vertices[b].Y * vertices[b].Y;
+                return distA.CompareTo(distB);
+            });
+
+            // 全有効頂点のZ最大値を取得
+            int maxZ = validIndices.Max(i => vertices[i].Z);
+
+            if (maxZ == 0)
+            {
+                timerTestmode.Enabled = false;
+                return;
+            }
+
+            // 目標Zの決定
+            int zStep = 20;
+            int targetZ = (maxZ % zStep == 0) ? maxZ - zStep : (maxZ / zStep) * zStep;
+
+            // ソート済みリストから「Z > targetZ」かつ最も距離が小さい（＝先頭に最も近い）1頂点を探す
+            int selectedIndex = -1;
+            foreach (int idx in validIndices)
+            {
+                if (vertices[idx].Z > targetZ)
+                {
+                    selectedIndex = idx;
+                    break;
+                }
+            }
+
+            if (selectedIndex == -1)
+                return;   // 理論上ここには来ないが、安全のため
+
+            // 1頂点だけZを目標値に下げる
+            vertices[selectedIndex].Z = targetZ;
+
+            selectedVertex = vertices[selectedIndex];
+            trackBarZ.Value = selectedVertex.Z;
+            numericUpDownZ.Value = selectedVertex.Z;
+            isAddingTriangle = false;
+
+            // 再描画の一通り処理
+            pictureBoxRight.Invalidate();
+            DrawMirrorImage();
+            UpdateStatusLabel();
+            RefreshPreview();
+            SaveUndoState();
+
+            timerTestmode.Interval = 100;
+        }
     }
 
     // 以下、クラス定義（変更なし）
