@@ -94,7 +94,7 @@ namespace lowpoly_mask_builder
         private const int POINT_RADIUS = 4;
         private const int EDGE_ACTIVE_DISTANCE = 8;
         private const int THICKNESS_MM = 2;
-        private const string APPLCATION_VERSION = " Ver.0.6";
+        private const string APPLCATION_VERSION = " Ver.0.7";
 
         // ズーム関連
         private int zoomRate = 1;
@@ -787,7 +787,14 @@ namespace lowpoly_mask_builder
 
             if (trianglesContainingEdge.Count > 1)
             {
-                SplitTrianglesByAddingMidpoint(trianglesContainingEdge);
+                if ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)
+                {
+                    RotateEdge(trianglesContainingEdge);
+                }
+                else
+                {
+                    SplitTrianglesByAddingMidpoint(trianglesContainingEdge);
+                }
                 return;
             }
 
@@ -978,6 +985,63 @@ namespace lowpoly_mask_builder
                     triangles.Add(new Triangle(midpointIndex, secondEdgeVertex, oppositeVertex));
                 }
             }
+        }
+
+        private void RotateEdge(List<Triangle> trianglesContainingEdge)
+        {
+            if (trianglesContainingEdge.Count != 2) return;
+
+            int v1 = activeEdge.VertexIndex1;
+            int v2 = activeEdge.VertexIndex2;
+
+            Triangle tri1 = trianglesContainingEdge[0];
+            Triangle tri2 = trianglesContainingEdge[1];
+
+            int a = GetOppositeVertex(tri1, v1, v2);  // tri1側の反対頂点
+            int b = GetOppositeVertex(tri2, v1, v2);  // tri2側の反対頂点
+
+            if (a == -1 || b == -1) return;
+
+            // Undo保存（変更前状態を保存）
+            SaveUndoState();
+
+            // === ここで頂点をスワップしてエッジを回転 ===
+            // tri1 と tri2 の頂点構成を、対角線を入れ替える形に直接書き換える
+
+            // tri1 が共有エッジを v1→v2 の順で持っているかを判定
+            bool tri1HasV1toV2 =
+                (tri1.V1 == v1 && tri1.V2 == v2) ||
+                (tri1.V2 == v1 && tri1.V3 == v2) ||
+                (tri1.V3 == v1 && tri1.V1 == v2);
+
+            if (tri1HasV1toV2)
+            {
+                // パターン2: エッジが逆順
+                SetTriangleVertices(tri1, v1, b, a);
+                SetTriangleVertices(tri2, v2, a, b);
+            }
+            else
+            {
+                // パターン1: エッジが正順
+                SetTriangleVertices(tri1, v1, a, b);
+                SetTriangleVertices(tri2, v2, b, a);
+            }
+
+            // 退化チェック（念のため）
+            RemoveDegenerateTriangles();
+
+            // 再描画
+            pictureBoxRight.Invalidate();
+            DrawMirrorImage();
+            RefreshPreview();
+        }
+
+        // 補助メソッド（三角形の頂点を直接セット。順序を固定）
+        private void SetTriangleVertices(Triangle tri, int x, int y, int z)
+        {
+            tri.V1 = x;
+            tri.V2 = y;
+            tri.V3 = z;
         }
 
         private int GetOppositeVertex(Triangle triangle, int edgeVertex1, int edgeVertex2)
