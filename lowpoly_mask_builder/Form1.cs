@@ -218,7 +218,7 @@ namespace lowpoly_mask_builder
             {
                 try
                 {
-                    OpenLmbFile(_initialFilePath);
+                    OpenLmbFile(_initialFilePath, true);
                 }
                 catch (Exception ex)
                 {
@@ -1244,7 +1244,7 @@ namespace lowpoly_mask_builder
             }
         }
 
-        private void OpenLmbFile(string filename)
+        private void OpenLmbFile(string filename, bool disable_undo = false)
         {
             try
             {
@@ -1273,7 +1273,10 @@ namespace lowpoly_mask_builder
                 currentFileName = filename;
                 this.Text = Path.GetFileName(currentFileName) + " - Lowpoly Mask Builder" + APPLCATION_VERSION;
 
-                SaveUndoState(); // 開いた状態もUNDO可能に
+                if (!disable_undo)
+                {
+                    SaveUndoState(); // 開いた状態もUNDO可能に
+                }
 
                 pictureBoxRight.Invalidate();
                 DrawMirrorImage();
